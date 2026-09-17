@@ -15,6 +15,7 @@ import { CardWar } from './components/MiniGames/CardWar'
 import { ReactionDuel } from './components/MiniGames/ReactionDuel'
 import { HotPotato } from './components/MiniGames/HotPotato'
 import { Button } from './components/ui/Button'
+import { ReconnectBanner } from './components/ReconnectBanner'
 import { RoomSync } from './peer/sync'
 import { SHOP_ITEMS } from './content/shop'
 import {
@@ -33,15 +34,29 @@ import {
 import { emptyState, type GameState, type Intensity, type ShopItem } from './types'
 import { sfx } from './lib/audio'
 import { ApartNightApp } from './apart/ApartNightApp'
+import { useRoomKeepAlive } from './lib/keepAlive'
+import { clearSession, loadSession, saveSession, type SavedSession } from './lib/session'
+import { readLaunchParams } from './lib/room'
 
 type Screen = 'landing' | 'lobby' | 'waiting' | 'game'
 type Mode = 'pick' | 'full' | 'apart'
 
+function readBoot() {
+  return { saved: loadSession(), launch: readLaunchParams() }
+}
+
 export default function App() {
-  const [mode, setMode] = useState<Mode>('pick')
-  const [screen, setScreen] = useState<Screen>('landing')
+  const [boot] = useState(readBoot)
+  const [resumeOffer, setResumeOffer] = useState<SavedSession | null>(boot.saved)
+  const [apartResume, setApartResume] = useState<SavedSession | null>(null)
+  const [mode, setMode] = useState<Mode>(boot.saved ? 'pick' : (boot.launch?.mode ?? 'pick'))
+  const [screen, setScreen] = useState<Screen>(
+    boot.saved ? 'landing' : boot.launch?.mode === 'full' ? 'lobby' : 'landing',
+  )
   const [role, setRole] = useState<'host' | 'guest'>('host')
   const [roomCode, setRoomCode] = useState('')
+  const [fixedRoom, setFixedRoom] = useState(false)
+  const [reconnecting, setReconnecting] = useState(false)
   const [state, setState] = useState<GameState>(() => emptyState())
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
@@ -60,14 +75,22 @@ export default function App() {
   const roleRef = useRef(role)
   const soloRef = useRef(solo)
   const miniResolvedRef = useRef(miniResolved)
+  const screenRef = useRef(screen)
+  const codeRef = useRef(roomCode)
+  const connectedRef = useRef(connected)
+  const remoteRef = useRef(false)
   stateRef.current = state
   roleRef.current = role
   soloRef.current = solo
   miniResolvedRef.current = miniResolved
+  screenRef.current = screen
+  codeRef.current = roomCode
+  connectedRef.current = connected
 
   const pushState = useCallback((next: GameState) => {
     setState(next)
     stateRef.current = next
+    syncRef.current?.rememberState(next)
     if (roleRef.current === 'host' && syncRef.current) {
       syncRef.current.broadcastState(next)
     }
@@ -130,15 +153,24 @@ export default function App() {
     }
     const sync = new RoomSync<GameState>({
       onState: (s) => {
+        remoteRef.current = true
         setState(s)
         stateRef.current = s
+        syncRef.current?.rememberState(s)
         setConnected(true)
-        if (s.started) setScreen('game')
-        else setScreen('waiting')
+        setReconnecting(false)
+        if (s.started) {
+          setScreen('game')
+          screenRef.current = 'game'
+        } else {
+          setScreen('waiting')
+          screenRef.current = 'waiting'
+        }
       },
       onMiniAction: handleMiniAction,
       onGuestJoined: (name) => {
         setConnected(true)
+        setReconnecting(false)
         setStatus(`${name} joined`)
         const next = { ...stateRef.current, guestName: name }
         setState(next)
@@ -146,17 +178,109 @@ export default function App() {
         syncRef.current?.sendWelcome(next, name)
       },
       onStatus: setStatus,
-      onError: setError,
+      onError: (msg) => {
+        if (!msg) {
+          setError('')
+          return
+        }
+        const scr = screenRef.current
+        if (scr === 'lobby' || scr === 'landing') setError(msg)
+        else {
+          setReconnecting(true)
+          setStatus('Reconnecting…')
+        }
+      },
+      onReconnecting: setReconnecting,
     })
     syncRef.current = sync
     return sync
   }, [handleMiniAction])
 
-  useEffect(() => () => syncRef.current?.destroy(), [])
+  const persistSession = useCallback(() => {
+    if (soloRef.current) return
+    const scr = screenRef.current
+    if (scr !== 'waiting' && scr !== 'game') return
+    const sync = syncRef.current
+    if (!sync?.role) return
+    const st = stateRef.current
+    const myName = (sync.role === 'host' ? st.hostName : st.guestName) || sync.myName || 'Steve'
+    const partnerName = (sync.role === 'host' ? st.guestName : st.hostName) || sync.partnerName || 'Laura'
+    saveSession({
+      v: 1,
+      role: sync.role,
+      mode: 'full',
+      code: sync.fixed ? '' : codeRef.current,
+      fixed: sync.fixed,
+      hostName: st.hostName || 'Steve',
+      guestName: st.guestName || 'Laura',
+      myName,
+      partnerName,
+      state: st,
+      screen: scr,
+      connected: connectedRef.current,
+    })
+  }, [])
 
+  useEffect(() => () => syncRef.current?.destroy(), [])
   useEffect(() => {
     syncRef.current?.setHandlers({ onMiniAction: handleMiniAction })
   }, [handleMiniAction])
+  useEffect(() => {
+    persistSession()
+  }, [state, screen, role, roomCode, connected, mode, solo, persistSession])
+
+  const inRoom = mode === 'full' && !solo && (screen === 'waiting' || screen === 'game')
+  useRoomKeepAlive(inRoom, syncRef, persistSession)
+
+  const leaveToLanding = () => {
+    syncRef.current?.destroy()
+    syncRef.current = null
+    clearSession()
+    setReconnecting(false)
+    setConnected(false)
+    setSolo(false)
+    soloRef.current = false
+    setFixedRoom(false)
+    setMode('pick')
+    setScreen('landing')
+    screenRef.current = 'landing'
+    setState(emptyState())
+    stateRef.current = emptyState()
+    setError('')
+    setStatus('')
+  }
+
+  const resumeFull = (saved: SavedSession) => {
+    setSolo(false)
+    soloRef.current = false
+    setRole(saved.role)
+    roleRef.current = saved.role
+    setRoomCode(saved.code)
+    codeRef.current = saved.code
+    setFixedRoom(saved.fixed)
+    const st = (saved.state as GameState) || emptyState()
+    setState(st)
+    stateRef.current = st
+    const scr: Screen = saved.screen === 'game' ? 'game' : 'waiting'
+    setScreen(scr)
+    screenRef.current = scr
+    setConnected(Boolean(saved.connected))
+    connectedRef.current = Boolean(saved.connected)
+    setMode('full')
+    setStatus('Reconnecting…')
+    setReconnecting(true)
+    const sync = ensureSync()
+    sync.adopt({
+      role: saved.role,
+      mode: 'full',
+      code: saved.code,
+      fixed: saved.fixed,
+      myName: saved.myName,
+      partnerName: saved.partnerName,
+    })
+    sync.rememberState(st)
+    void sync.ensureConnected()
+  }
 
   const handleHost = async (opts: {
     code: string
@@ -166,7 +290,11 @@ export default function App() {
   }) => {
     setError('')
     setRole('host')
+    roleRef.current = 'host'
+    setFixedRoom(false)
     setRoomCode(opts.code)
+    codeRef.current = opts.code
+    remoteRef.current = false
     const next = emptyState({
       hostName: opts.hostName || 'Steve',
       guestName: opts.guestName || 'Laura',
@@ -176,9 +304,15 @@ export default function App() {
     setState(next)
     stateRef.current = next
     try {
-      await ensureSync().host(opts.code, 'full')
+      const sync = ensureSync()
+      sync.myName = opts.hostName || 'Steve'
+      sync.partnerName = opts.guestName || 'Laura'
+      sync.rememberState(next)
+      await sync.host(opts.code, 'full')
       setScreen('waiting')
+      screenRef.current = 'waiting'
       setSolo(false)
+      soloRef.current = false
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to host')
     }
@@ -187,20 +321,100 @@ export default function App() {
   const handleJoin = async (opts: { code: string; guestName: string }) => {
     setError('')
     setRole('guest')
+    roleRef.current = 'guest'
+    setFixedRoom(false)
     setRoomCode(opts.code)
-    setState((s) => ({ ...s, guestName: opts.guestName || 'Laura', consent: true }))
+    codeRef.current = opts.code
+    remoteRef.current = false
+    setState((s) => {
+      const next = { ...s, guestName: opts.guestName || 'Laura', consent: true }
+      stateRef.current = next
+      return next
+    })
     try {
-      await ensureSync().join(opts.code, opts.guestName || 'Laura', 'full')
+      const sync = ensureSync()
+      sync.myName = opts.guestName || 'Laura'
+      sync.partnerName = stateRef.current.hostName || 'Steve'
+      await sync.join(opts.code, opts.guestName || 'Laura', 'full')
       setConnected(true)
       setScreen('waiting')
+      screenRef.current = 'waiting'
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to join')
     }
   }
 
-  const playSoloPreview = (intensity: Intensity = 'hard') => {
-    setSolo(true)
+  const handlePlayTogether = async (opts: {
+    myName: string
+    partnerName: string
+    intensity: Intensity
+  }) => {
+    setError('')
+    setSolo(false)
+    soloRef.current = false
+    setFixedRoom(true)
+    setRoomCode('')
+    codeRef.current = ''
     setRole('host')
+    roleRef.current = 'host'
+    remoteRef.current = false
+    const next = emptyState({
+      hostName: opts.myName || 'Steve',
+      guestName: opts.partnerName || 'Laura',
+      intensity: opts.intensity,
+      consent: true,
+    })
+    setState(next)
+    stateRef.current = next
+    setConnected(false)
+    setScreen('waiting')
+    screenRef.current = 'waiting'
+    setStatus(`Waiting for ${opts.partnerName || 'Laura'}…`)
+    setReconnecting(false)
+    try {
+      const sync = ensureSync()
+      sync.rememberState(next)
+      const won = await sync.playTogether({
+        mode: 'full',
+        myName: opts.myName || 'Steve',
+        partnerName: opts.partnerName || 'Laura',
+      })
+      setRole(won)
+      roleRef.current = won
+      if (won === 'guest') {
+        setConnected(true)
+        if (!remoteRef.current) {
+          setState((s) => {
+            const n = {
+              ...s,
+              hostName: opts.partnerName || 'Steve',
+              guestName: opts.myName || 'Laura',
+              consent: true,
+            }
+            stateRef.current = n
+            return n
+          })
+        }
+      }
+      persistSession()
+    } catch (e) {
+      clearSession()
+      syncRef.current?.destroy()
+      syncRef.current = null
+      setFixedRoom(false)
+      setScreen('lobby')
+      screenRef.current = 'lobby'
+      setStatus('')
+      setError(e instanceof Error ? e.message : 'Could not find your partner — both tap We\'re both here')
+    }
+  }
+
+  const playSoloPreview = (intensity: Intensity = 'hard') => {
+    clearSession()
+    setSolo(true)
+    soloRef.current = true
+    setRole('host')
+    setFixedRoom(false)
     setConnected(true)
     setRoomCode('SOLO01')
     const next = startSession(
@@ -212,7 +426,9 @@ export default function App() {
       }),
     )
     setState(next)
+    stateRef.current = next
     setScreen('game')
+    screenRef.current = 'game'
   }
 
   const startNight = () => {
@@ -561,18 +777,20 @@ export default function App() {
     )
   }
 
+  const rejoinLabel = resumeOffer
+    ? `${resumeOffer.mode === 'apart' ? 'Apart Night' : 'Full Night'}${
+        resumeOffer.fixed ? '' : resumeOffer.code ? ` · ${resumeOffer.code}` : ''
+      }`
+    : undefined
+
   if (mode === 'apart') {
     return (
       <ApartNightApp
-        onExit={() => {
-          syncRef.current?.destroy()
-          syncRef.current = null
-          setMode('pick')
-          setScreen('landing')
-          setConnected(false)
-          setSolo(false)
-          setState(emptyState())
-        }}
+        resume={apartResume}
+        initialJoinCode={
+          apartResume ? undefined : boot.launch?.mode === 'apart' ? boot.launch.code : undefined
+        }
+        onExit={leaveToLanding}
       />
     )
   }
@@ -580,6 +798,34 @@ export default function App() {
   if (mode === 'pick' || screen === 'landing') {
     return (
       <Landing
+        rejoinLabel={rejoinLabel}
+        onRejoin={
+          resumeOffer
+            ? () => {
+                const saved = resumeOffer
+                setResumeOffer(null)
+                if (saved.mode === 'apart') {
+                  setApartResume(saved)
+                  setMode('apart')
+                } else {
+                  resumeFull(saved)
+                }
+              }
+            : undefined
+        }
+        onDismissRejoin={
+          resumeOffer
+            ? () => {
+                clearSession()
+                setResumeOffer(null)
+                if (boot.launch?.mode === 'apart') setMode('apart')
+                else if (boot.launch?.mode === 'full') {
+                  setMode('full')
+                  setScreen('lobby')
+                }
+              }
+            : undefined
+        }
         onFullNight={() => {
           sfx.tap()
           setMode('full')
@@ -599,6 +845,8 @@ export default function App() {
         <Lobby
           onHost={handleHost}
           onJoin={handleJoin}
+          onPlayTogether={handlePlayTogether}
+          initialJoinCode={boot.launch?.mode === 'full' ? boot.launch.code : undefined}
           onBack={() => {
             setMode('pick')
             setScreen('landing')
@@ -623,24 +871,28 @@ export default function App() {
     return (
       <WaitingRoom
         code={roomCode}
+        mode="full"
+        showCode={!fixedRoom && Boolean(roomCode)}
         hostName={state.hostName}
         guestName={state.guestName}
         intensity={state.intensity}
         connected={connected || solo}
         isHost={role === 'host'}
+        partnerName={role === 'host' ? state.guestName : state.hostName}
+        reconnecting={reconnecting}
+        status={status}
         onStart={startNight}
-        onCopy={() => {
-          void navigator.clipboard?.writeText(roomCode)
-          setStatus('Code copied')
-          sfx.coin()
-        }}
       />
     )
   }
 
-  // Meetup is full-screen; still wrap for coins if not meetup phase UI
   if (state.phase === 'meetup' || state.arcPhase === 'meetup') {
-    return renderGameBody()
+    return (
+      <>
+        <ReconnectBanner show={reconnecting} />
+        {renderGameBody()}
+      </>
+    )
   }
 
   return (
@@ -648,19 +900,12 @@ export default function App() {
       state={state}
       myRole={role}
       status={status}
+      reconnecting={reconnecting}
       onPause={() => {
         if (isHost) pushState({ ...state, phase: 'paused' })
       }}
       onEnd={() => {
-        if (confirm('End this session?')) {
-          syncRef.current?.destroy()
-          syncRef.current = null
-          setMode('pick')
-          setScreen('landing')
-          setConnected(false)
-          setSolo(false)
-          setState(emptyState())
-        }
+        if (confirm('End this session?')) leaveToLanding()
       }}
     >
       {renderGameBody()}

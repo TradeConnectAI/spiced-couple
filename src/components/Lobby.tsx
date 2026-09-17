@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Intensity } from '../types'
 import { Button } from './ui/Button'
 import { makeRoomCode } from '../lib/room'
@@ -14,9 +14,11 @@ const INTENSITIES: { id: Intensity; label: string; blurb: string }[] = [
 export function Lobby({
   onHost,
   onJoin,
+  onPlayTogether,
   onBack,
   status,
   error,
+  initialJoinCode,
 }: {
   onHost: (opts: {
     code: string
@@ -25,17 +27,26 @@ export function Lobby({
     intensity: Intensity
   }) => void
   onJoin: (opts: { code: string; guestName: string }) => void
+  onPlayTogether: (opts: { myName: string; partnerName: string; intensity: Intensity }) => void
   onBack?: () => void
   status?: string
   error?: string
+  initialJoinCode?: string
 }) {
-  const [mode, setMode] = useState<'pick' | 'create' | 'join'>('pick')
+  const [mode, setMode] = useState<'together' | 'code-pick' | 'create' | 'join'>(
+    initialJoinCode ? 'join' : 'together',
+  )
   const [hostName, setHostName] = useState('Steve')
   const [guestName, setGuestName] = useState('Laura')
   const [intensity, setIntensity] = useState<Intensity>('spicy')
   const [consent, setConsent] = useState(false)
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(initialJoinCode ?? '')
   const [busy, setBusy] = useState(false)
+  const nameRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (initialJoinCode) nameRef.current?.focus()
+  }, [initialJoinCode])
 
   const create = async () => {
     if (!consent) return
@@ -53,6 +64,17 @@ export function Lobby({
     setBusy(false)
   }
 
+  const together = async () => {
+    if (!consent) return
+    setBusy(true)
+    await onPlayTogether({
+      myName: hostName.trim() || 'Steve',
+      partnerName: guestName.trim() || 'Laura',
+      intensity,
+    })
+    setBusy(false)
+  }
+
   return (
     <div className="bg-heat min-h-dvh safe-pad px-5 py-8">
       <div className="mx-auto max-w-md space-y-6">
@@ -63,10 +85,12 @@ export function Lobby({
             </button>
           )}
           <h2 className="font-display text-3xl font-bold text-glow-gold">Full Night lobby</h2>
-          <p className="mt-1 text-sm text-muted">Create a room or join with a code</p>
+          <p className="mt-1 text-sm text-muted">
+            {mode === 'together' ? 'Both phones tap the same button. No code.' : 'Or use a code if you prefer'}
+          </p>
         </header>
 
-        {mode === 'pick' && (
+        {mode === 'code-pick' && (
           <div className="grid gap-3 animate-fade-in">
             <Button variant="gold" className="w-full py-4" onClick={() => setMode('create')}>
               Create room (Host)
@@ -74,32 +98,50 @@ export function Lobby({
             <Button variant="primary" className="w-full py-4" onClick={() => setMode('join')}>
               Join room
             </Button>
+            <button
+              type="button"
+              className="text-xs text-muted underline py-1"
+              onClick={() => setMode('together')}
+            >
+              ← Back to Play together
+            </button>
             <HouseRulesBanner />
           </div>
         )}
 
-        {mode !== 'pick' && (
+        {mode !== 'code-pick' && (
           <div className="space-y-5 animate-fade-in rounded-3xl border border-white/10 bg-ink-card/80 p-5 backdrop-blur">
-            <button
-              type="button"
-              className="text-xs text-muted underline"
-              onClick={() => setMode('pick')}
-            >
-              ← Back
-            </button>
+            {mode !== 'together' && (
+              <button
+                type="button"
+                className="text-xs text-muted underline"
+                onClick={() => setMode('code-pick')}
+              >
+                ← Back
+              </button>
+            )}
+
+            {mode === 'together' && (
+              <>
+                <p className="text-center text-xs uppercase tracking-[0.28em] text-gold/80">Play together</p>
+                <p className="text-center text-[11px] leading-snug text-muted">On Laura's phone, put Laura first and Steve as partner.</p>
+              </>
+            )}
 
             <label className="block space-y-1.5">
               <span className="text-xs uppercase tracking-wider text-muted">Your name</span>
               <input
+                ref={mode === 'join' || mode === 'together' ? nameRef : undefined}
                 className="w-full rounded-xl border border-white/15 bg-ink px-4 py-3 text-cream outline-none focus:border-gold/50"
-                value={mode === 'create' ? hostName : guestName}
+                value={mode === 'join' ? guestName : hostName}
+                autoFocus={Boolean(initialJoinCode) && mode === 'join'}
                 onChange={(e) =>
-                  mode === 'create' ? setHostName(e.target.value) : setGuestName(e.target.value)
+                  mode === 'join' ? setGuestName(e.target.value) : setHostName(e.target.value)
                 }
               />
             </label>
 
-            {mode === 'create' && (
+            {(mode === 'create' || mode === 'together') && (
               <>
                 <label className="block space-y-1.5">
                   <span className="text-xs uppercase tracking-wider text-muted">Partner name</span>
@@ -161,12 +203,21 @@ export function Lobby({
               </span>
             </label>
 
-            {mode === 'create' ? (
+            {mode === 'together' ? (
+              <Button
+                variant="gold"
+                className="w-full py-5 text-lg"
+                disabled={!consent || busy}
+                onClick={() => void together()}
+              >
+                {busy ? 'Finding each other…' : "We're both here"}
+              </Button>
+            ) : mode === 'create' ? (
               <Button
                 variant="gold"
                 className="w-full py-4"
                 disabled={!consent || busy}
-                onClick={create}
+                onClick={() => void create()}
               >
                 {busy ? 'Opening…' : 'Create & get code'}
               </Button>
@@ -175,10 +226,20 @@ export function Lobby({
                 variant="primary"
                 className="w-full py-4"
                 disabled={!consent || busy || code.length < 4}
-                onClick={join}
+                onClick={() => void join()}
               >
                 {busy ? 'Connecting…' : 'Join room'}
               </Button>
+            )}
+
+            {mode === 'together' && (
+              <button
+                type="button"
+                className="w-full text-center text-xs text-muted underline py-1"
+                onClick={() => setMode('code-pick')}
+              >
+                Use a code instead
+              </button>
             )}
 
             {status && <p className="text-center text-sm text-gold-soft">{status}</p>}

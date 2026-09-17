@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import type { ApartState } from '../types'
 import { CoinPill } from '../../components/ui/CoinPill'
 import { isMuted, setMuted, sfx } from '../../lib/audio'
+import { ReconnectBanner } from '../../components/ReconnectBanner'
 
 export function ApartShell({
   state,
@@ -10,6 +11,7 @@ export function ApartShell({
   children,
   onPause,
   onEnd,
+  reconnecting,
 }: {
   state: ApartState
   myRole: 'host' | 'guest'
@@ -17,12 +19,14 @@ export function ApartShell({
   children: ReactNode
   onPause: () => void
   onEnd: () => void
+  reconnecting?: boolean
 }) {
   const [mute, setMute] = useState(isMuted())
   const pop = state.phase === 'quiz-reveal'
 
   return (
     <div className="bg-heat min-h-dvh safe-pad flex flex-col">
+      <ReconnectBanner show={Boolean(reconnecting)} />
       <header className="mx-auto w-full max-w-md pt-4 pb-2 px-4">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="font-display text-lg font-bold text-rose">Apart Night</div>

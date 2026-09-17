@@ -29,9 +29,18 @@ npm run preview
 1. **Full Night** — classic arc: talk → photo → clip → meetup → filth (mini-games + Act Shop).
 2. **Apart Night** — stay in different rooms. Quiz rounds (asker sets the secret answer, or fixed trivia, or partner judges) mixed with apart quests. Wrong answers → gendered video/text forfeits. No meetup gate.
 
-### Room flow (Full Night)
-1. **Host** (Steve): Create room → pick intensity → tick 18+ consent → share the **6-character code**.
-2. **Guest** (Laura): Join room → enter code → consent.
+### Play together (default — no code)
+1. Both phones open the site and pick **Full Night** or **Apart Night**.
+2. Names default to Steve & Laura. On Laura’s phone, put **Laura** first.
+3. Tick 18+ consent, then both tap **We’re both here**. Stay on the page — the room is private and fixed.
+4. Whoever connects first hosts. The other phone joins automatically (retries for about 30s: “Waiting for Laura…” / “Waiting for Steve…”).
+5. Host taps **Start the night**.
+
+Switching to WhatsApp does **not** end the room. The page requests a screen wake lock, keeps the peer, and shows **Reconnecting…** if the socket died. A reload offers **Rejoin room**.
+
+### Room flow with a code (secondary)
+1. **Use a code instead** → Host creates a room and stays on the page. Huge code, **Copy code**, **Share**, and a **QR** Laura scans with her camera (`?mode=full|apart&code=ABC123`).
+2. **Guest**: the link opens the join form with the code filled in. Tick 18+ (not skipped) and join.
 3. When both connected, Host taps **Start the night**.
 4. Play the **10-round arc** (strict order):
    - **Rounds 1–3 — Apart · Naughty talk / Q&A** (text + audio). No mini-games. No Act Shop.

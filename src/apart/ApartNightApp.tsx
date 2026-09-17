@@ -21,31 +21,53 @@ import {
 } from './logic'
 import { emptyApartState, type ApartState } from './types'
 import type { Intensity } from '../types'
-import { sfx } from '../lib/audio'
+import { useRoomKeepAlive } from '../lib/keepAlive'
+import { clearSession, saveSession, type SavedSession } from '../lib/session'
 
 type Screen = 'lobby' | 'waiting' | 'game'
 
-export function ApartNightApp({ onExit }: { onExit: () => void }) {
-  const [screen, setScreen] = useState<Screen>('lobby')
-  const [role, setRole] = useState<'host' | 'guest'>('host')
-  const [roomCode, setRoomCode] = useState('')
-  const [state, setState] = useState<ApartState>(() => emptyApartState())
-  const [status, setStatus] = useState('')
+export function ApartNightApp({
+  onExit,
+  initialJoinCode,
+  resume,
+}: {
+  onExit: () => void
+  initialJoinCode?: string
+  resume?: SavedSession | null
+}) {
+  const [screen, setScreen] = useState<Screen>(resume ? (resume.screen === 'game' ? 'game' : 'waiting') : 'lobby')
+  const [role, setRole] = useState<'host' | 'guest'>(resume?.role ?? 'host')
+  const [roomCode, setRoomCode] = useState(resume?.code ?? '')
+  const [fixedRoom, setFixedRoom] = useState(Boolean(resume?.fixed))
+  const [reconnecting, setReconnecting] = useState(false)
+  const [state, setState] = useState<ApartState>(() =>
+    resume?.state ? (resume.state as ApartState) : emptyApartState(),
+  )
+  const [status, setStatus] = useState(resume ? 'Reconnecting…' : '')
   const [error, setError] = useState('')
-  const [connected, setConnected] = useState(false)
+  const [connected, setConnected] = useState(Boolean(resume?.connected))
   const [solo, setSolo] = useState(false)
 
   const syncRef = useRef<RoomSync<ApartState> | null>(null)
   const stateRef = useRef(state)
   const roleRef = useRef(role)
   const soloRef = useRef(solo)
+  const screenRef = useRef<Screen>(screen)
+  const codeRef = useRef(roomCode)
+  const connectedRef = useRef(connected)
+  const remoteRef = useRef(false)
+  const resumedRef = useRef(false)
   stateRef.current = state
   roleRef.current = role
   soloRef.current = solo
+  screenRef.current = screen
+  codeRef.current = roomCode
+  connectedRef.current = connected
 
   const pushState = useCallback((next: ApartState) => {
     setState(next)
     stateRef.current = next
+    syncRef.current?.rememberState(next)
     if (roleRef.current === 'host' && syncRef.current) {
       syncRef.current.broadcastState(next)
     }
@@ -79,6 +101,7 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
     [pushState],
   )
 
+
   const ensureSync = useCallback(() => {
     if (syncRef.current) {
       syncRef.current.setHandlers({ onMiniAction: handleAction })
@@ -86,15 +109,24 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
     }
     const sync = new RoomSync<ApartState>({
       onState: (s) => {
+        remoteRef.current = true
         setState(s)
         stateRef.current = s
+        syncRef.current?.rememberState(s)
         setConnected(true)
-        if (s.started) setScreen('game')
-        else setScreen('waiting')
+        setReconnecting(false)
+        if (s.started) {
+          setScreen('game')
+          screenRef.current = 'game'
+        } else {
+          setScreen('waiting')
+          screenRef.current = 'waiting'
+        }
       },
       onMiniAction: handleAction,
       onGuestJoined: (name) => {
         setConnected(true)
+        setReconnecting(false)
         setStatus(`${name} joined`)
         const next = { ...stateRef.current, guestName: name }
         setState(next)
@@ -102,16 +134,77 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
         syncRef.current?.sendWelcome(next, name)
       },
       onStatus: setStatus,
-      onError: setError,
+      onError: (msg) => {
+        if (!msg) {
+          setError('')
+          return
+        }
+        const scr = screenRef.current
+        if (scr === 'lobby') setError(msg)
+        else {
+          setReconnecting(true)
+          setStatus('Reconnecting…')
+        }
+      },
+      onReconnecting: setReconnecting,
     })
     syncRef.current = sync
     return sync
   }, [handleAction])
 
+  const persistSession = useCallback(() => {
+    if (soloRef.current) return
+    const scr = screenRef.current
+    if (scr !== 'waiting' && scr !== 'game') return
+    const sync = syncRef.current
+    if (!sync?.role) return
+    const st = stateRef.current
+    const myName = (sync.role === 'host' ? st.hostName : st.guestName) || sync.myName || 'Steve'
+    const partnerName = (sync.role === 'host' ? st.guestName : st.hostName) || sync.partnerName || 'Laura'
+    saveSession({
+      v: 1,
+      role: sync.role,
+      mode: 'apart',
+      code: sync.fixed ? '' : codeRef.current,
+      fixed: sync.fixed,
+      hostName: st.hostName || 'Steve',
+      guestName: st.guestName || 'Laura',
+      myName,
+      partnerName,
+      state: st,
+      screen: scr,
+      connected: connectedRef.current,
+    })
+  }, [])
+
   useEffect(() => () => syncRef.current?.destroy(), [])
   useEffect(() => {
     syncRef.current?.setHandlers({ onMiniAction: handleAction })
   }, [handleAction])
+  useEffect(() => {
+    persistSession()
+  }, [state, screen, role, roomCode, connected, solo, persistSession])
+
+  const inRoom = !solo && (screen === 'waiting' || screen === 'game')
+  useRoomKeepAlive(inRoom, syncRef, persistSession)
+
+  useEffect(() => {
+    if (!resume || resumedRef.current) return
+    resumedRef.current = true
+    const sync = ensureSync()
+    sync.adopt({
+      role: resume.role,
+      mode: 'apart',
+      code: resume.code,
+      fixed: resume.fixed,
+      myName: resume.myName,
+      partnerName: resume.partnerName,
+    })
+    sync.rememberState(stateRef.current)
+    setReconnecting(true)
+    setStatus('Reconnecting…')
+    void sync.ensureConnected()
+  }, [resume, ensureSync])
 
   const handleHost = async (opts: {
     code: string
@@ -121,7 +214,11 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
   }) => {
     setError('')
     setRole('host')
+    roleRef.current = 'host'
+    setFixedRoom(false)
     setRoomCode(opts.code)
+    codeRef.current = opts.code
+    remoteRef.current = false
     const next = emptyApartState({
       hostName: opts.hostName || 'Steve',
       guestName: opts.guestName || 'Laura',
@@ -131,9 +228,15 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
     setState(next)
     stateRef.current = next
     try {
-      await ensureSync().host(opts.code, 'apart')
+      const sync = ensureSync()
+      sync.myName = opts.hostName || 'Steve'
+      sync.partnerName = opts.guestName || 'Laura'
+      sync.rememberState(next)
+      await sync.host(opts.code, 'apart')
       setScreen('waiting')
+      screenRef.current = 'waiting'
       setSolo(false)
+      soloRef.current = false
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to host')
     }
@@ -142,20 +245,99 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
   const handleJoin = async (opts: { code: string; guestName: string }) => {
     setError('')
     setRole('guest')
+    roleRef.current = 'guest'
+    setFixedRoom(false)
     setRoomCode(opts.code)
-    setState((s) => ({ ...s, guestName: opts.guestName || 'Laura', consent: true }))
+    codeRef.current = opts.code
+    remoteRef.current = false
+    setState((s) => {
+      const next = { ...s, guestName: opts.guestName || 'Laura', consent: true }
+      stateRef.current = next
+      return next
+    })
     try {
-      await ensureSync().join(opts.code, opts.guestName || 'Laura', 'apart')
+      const sync = ensureSync()
+      sync.myName = opts.guestName || 'Laura'
+      await sync.join(opts.code, opts.guestName || 'Laura', 'apart')
       setConnected(true)
       setScreen('waiting')
+      screenRef.current = 'waiting'
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to join')
     }
   }
 
-  const playSolo = (intensity: Intensity = 'fire') => {
-    setSolo(true)
+  const handlePlayTogether = async (opts: {
+    myName: string
+    partnerName: string
+    intensity: Intensity
+  }) => {
+    setError('')
+    setSolo(false)
+    soloRef.current = false
+    setFixedRoom(true)
+    setRoomCode('')
+    codeRef.current = ''
     setRole('host')
+    roleRef.current = 'host'
+    remoteRef.current = false
+    const next = emptyApartState({
+      hostName: opts.myName || 'Steve',
+      guestName: opts.partnerName || 'Laura',
+      intensity: opts.intensity,
+      consent: true,
+    })
+    setState(next)
+    stateRef.current = next
+    setConnected(false)
+    setScreen('waiting')
+    screenRef.current = 'waiting'
+    setStatus(`Waiting for ${opts.partnerName || 'Laura'}…`)
+    setReconnecting(false)
+    try {
+      const sync = ensureSync()
+      sync.rememberState(next)
+      const won = await sync.playTogether({
+        mode: 'apart',
+        myName: opts.myName || 'Steve',
+        partnerName: opts.partnerName || 'Laura',
+      })
+      setRole(won)
+      roleRef.current = won
+      if (won === 'guest') {
+        setConnected(true)
+        if (!remoteRef.current) {
+          setState((s) => {
+            const n = {
+              ...s,
+              hostName: opts.partnerName || 'Steve',
+              guestName: opts.myName || 'Laura',
+              consent: true,
+            }
+            stateRef.current = n
+            return n
+          })
+        }
+      }
+      persistSession()
+    } catch (e) {
+      clearSession()
+      syncRef.current?.destroy()
+      syncRef.current = null
+      setFixedRoom(false)
+      setScreen('lobby')
+      screenRef.current = 'lobby'
+      setStatus('')
+      setError(e instanceof Error ? e.message : "Could not find your partner — both tap We're both here")
+    }
+  }
+
+  const playSolo = (intensity: Intensity = 'fire') => {
+    clearSession()
+    setSolo(true)
+    soloRef.current = true
+    setRole('host')
+    setFixedRoom(false)
     setConnected(true)
     setRoomCode('SOLOAN')
     const next = startApartSession(
@@ -169,6 +351,7 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
     setState(next)
     stateRef.current = next
     setScreen('game')
+    screenRef.current = 'game'
   }
 
   const startNight = () => {
@@ -348,9 +531,11 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
         <ApartLobby
           onHost={handleHost}
           onJoin={handleJoin}
+          onPlayTogether={handlePlayTogether}
           onBack={onExit}
           status={status}
           error={error}
+          initialJoinCode={initialJoinCode}
         />
         <div className="mx-auto max-w-md px-5 pb-8 -mt-4">
           <button
@@ -369,17 +554,17 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
     return (
       <WaitingRoom
         code={roomCode}
+        mode="apart"
+        showCode={!fixedRoom && Boolean(roomCode)}
         hostName={state.hostName}
         guestName={state.guestName}
         intensity={state.intensity}
         connected={connected || solo}
         isHost={role === 'host'}
+        partnerName={role === 'host' ? state.guestName : state.hostName}
+        reconnecting={reconnecting}
+        status={status}
         onStart={startNight}
-        onCopy={() => {
-          void navigator.clipboard?.writeText(roomCode)
-          setStatus('Code copied')
-          sfx.coin()
-        }}
       />
     )
   }
@@ -389,12 +574,15 @@ export function ApartNightApp({ onExit }: { onExit: () => void }) {
       state={state}
       myRole={role}
       status={status}
+      reconnecting={reconnecting}
       onPause={() => {
         if (isHost) pushState({ ...state, phase: 'paused' })
       }}
       onEnd={() => {
         if (confirm('End Apart Night?')) {
           syncRef.current?.destroy()
+          syncRef.current = null
+          clearSession()
           onExit()
         }
       }}

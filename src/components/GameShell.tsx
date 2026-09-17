@@ -5,6 +5,7 @@ import { CoinPill } from './ui/CoinPill'
 import { ProgressDots } from './ui/ProgressDots'
 import { isMuted, setMuted, sfx } from '../lib/audio'
 import { arcLabelForRound } from '../content/narrator'
+import { ReconnectBanner } from './ReconnectBanner'
 
 export function GameShell({
   state,
@@ -13,6 +14,7 @@ export function GameShell({
   children,
   onPause,
   onEnd,
+  reconnecting,
 }: {
   state: GameState
   myRole: 'host' | 'guest'
@@ -20,6 +22,7 @@ export function GameShell({
   children: ReactNode
   onPause: () => void
   onEnd: () => void
+  reconnecting?: boolean
 }) {
   const [mute, setMute] = useState(isMuted())
   const pop = state.phase === 'result'
@@ -29,6 +32,7 @@ export function GameShell({
 
   return (
     <div className={`bg-heat min-h-dvh safe-pad flex flex-col ${state.phase === 'result' && state.lastWinner === myRole ? 'animate-flash-win' : state.phase === 'result' && state.lastWinner && state.lastWinner !== 'tie' && state.lastWinner !== myRole ? 'animate-flash-lose' : ''}`}>
+      <ReconnectBanner show={Boolean(reconnecting)} />
       <header className="mx-auto w-full max-w-md pt-4 pb-2 px-4">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="font-display text-lg font-bold text-gold-soft">Spiced Couple</div>

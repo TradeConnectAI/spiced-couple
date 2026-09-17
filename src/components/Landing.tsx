@@ -4,9 +4,15 @@ import { HouseRulesBanner } from './HouseRules'
 export function Landing({
   onFullNight,
   onApartNight,
+  rejoinLabel,
+  onRejoin,
+  onDismissRejoin,
 }: {
   onFullNight: () => void
   onApartNight: () => void
+  rejoinLabel?: string
+  onRejoin?: () => void
+  onDismissRejoin?: () => void
 }) {
   return (
     <div className="bg-heat relative flex min-h-dvh flex-col items-center justify-center overflow-hidden safe-pad px-6 py-12">
@@ -30,6 +36,20 @@ export function Landing({
       </p>
 
       <div className="mt-10 w-full max-w-sm space-y-3 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        {onRejoin && (
+          <div className="space-y-2 rounded-3xl border border-gold/30 bg-ink-card/80 p-4">
+            <p className="text-center text-xs uppercase tracking-[0.25em] text-gold/80">Still in a room</p>
+            {rejoinLabel && <p className="text-center text-sm text-cream">{rejoinLabel}</p>}
+            <Button variant="gold" className="w-full py-4" onClick={onRejoin}>
+              Rejoin room
+            </Button>
+            {onDismissRejoin && (
+              <button type="button" className="w-full text-xs text-muted underline" onClick={onDismissRejoin}>
+                Start fresh
+              </button>
+            )}
+          </div>
+        )}
         <Button variant="gold" className="w-full py-4 text-lg" onClick={onFullNight}>
           Full Night
           <span className="block text-xs font-normal opacity-80 mt-0.5">
