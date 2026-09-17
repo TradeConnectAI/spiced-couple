@@ -1,17 +1,16 @@
 import { useState } from 'react'
-import type { Intensity } from '../types'
-import { Button } from './ui/Button'
-import { makeRoomCode } from '../lib/room'
-import { HouseRulesBanner } from './HouseRules'
+import type { Intensity } from '../../types'
+import { Button } from '../../components/ui/Button'
+import { makeRoomCode } from '../../lib/room'
+import { HouseRulesBanner } from '../../components/HouseRules'
 
 const INTENSITIES: { id: Intensity; label: string; blurb: string }[] = [
-  { id: 'romantic', label: 'Romantic', blurb: 'Soft heat & longing' },
   { id: 'spicy', label: 'Spicy', blurb: 'Flirty & handsy' },
   { id: 'fire', label: 'Fire', blurb: 'Explicit & hungry' },
   { id: 'hard', label: 'Hard', blurb: 'Absolute filth' },
 ]
 
-export function Lobby({
+export function ApartLobby({
   onHost,
   onJoin,
   onBack,
@@ -25,14 +24,14 @@ export function Lobby({
     intensity: Intensity
   }) => void
   onJoin: (opts: { code: string; guestName: string }) => void
-  onBack?: () => void
+  onBack: () => void
   status?: string
   error?: string
 }) {
   const [mode, setMode] = useState<'pick' | 'create' | 'join'>('pick')
   const [hostName, setHostName] = useState('Steve')
   const [guestName, setGuestName] = useState('Laura')
-  const [intensity, setIntensity] = useState<Intensity>('spicy')
+  const [intensity, setIntensity] = useState<Intensity>('fire')
   const [consent, setConsent] = useState(false)
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
@@ -57,13 +56,13 @@ export function Lobby({
     <div className="bg-heat min-h-dvh safe-pad px-5 py-8">
       <div className="mx-auto max-w-md space-y-6">
         <header className="text-center">
-          {onBack && (
-            <button type="button" className="text-xs text-muted underline mb-3" onClick={onBack}>
-              ← All modes
-            </button>
-          )}
-          <h2 className="font-display text-3xl font-bold text-glow-gold">Full Night lobby</h2>
-          <p className="mt-1 text-sm text-muted">Create a room or join with a code</p>
+          <button type="button" className="text-xs text-muted underline mb-3" onClick={onBack}>
+            ← All modes
+          </button>
+          <h2 className="font-display text-3xl font-bold text-glow-crimson">Apart Night</h2>
+          <p className="mt-1 text-sm text-muted">
+            Quiz & quests · different rooms · video forfeits if you guess wrong
+          </p>
         </header>
 
         {mode === 'pick' && (
@@ -80,11 +79,7 @@ export function Lobby({
 
         {mode !== 'pick' && (
           <div className="space-y-5 animate-fade-in rounded-3xl border border-white/10 bg-ink-card/80 p-5 backdrop-blur">
-            <button
-              type="button"
-              className="text-xs text-muted underline"
-              onClick={() => setMode('pick')}
-            >
+            <button type="button" className="text-xs text-muted underline" onClick={() => setMode('pick')}>
               ← Back
             </button>
 
@@ -112,7 +107,7 @@ export function Lobby({
 
                 <div className="space-y-2">
                   <span className="text-xs uppercase tracking-wider text-muted">Intensity</span>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {INTENSITIES.map((i) => (
                       <button
                         key={i.id}
@@ -157,17 +152,11 @@ export function Lobby({
               />
               <span className="text-sm text-cream/90 leading-snug">
                 We are both 18+ consenting adults. Enthusiastic consent only — safewords always on.
-                No non-consent / CNC noncon content.
               </span>
             </label>
 
             {mode === 'create' ? (
-              <Button
-                variant="gold"
-                className="w-full py-4"
-                disabled={!consent || busy}
-                onClick={create}
-              >
+              <Button variant="gold" className="w-full py-4" disabled={!consent || busy} onClick={create}>
                 {busy ? 'Opening…' : 'Create & get code'}
               </Button>
             ) : (

@@ -1,35 +1,34 @@
 import Peer, { type DataConnection } from 'peerjs'
-import type { GameState, PeerMsg } from '../types'
-import { peerIdFromCode } from '../lib/room'
+import type { PeerMsg } from '../types'
+import { peerIdFromCode, type RoomMode } from '../lib/room'
 
-export type SyncHandlers = {
-  onState: (state: GameState) => void
+export type SyncHandlers<TState = unknown> = {
+  onState: (state: TState) => void
   onMiniAction: (action: string, payload?: unknown) => void
   onGuestJoined: (name: string) => void
   onStatus: (status: string) => void
   onError: (err: string) => void
 }
 
-export class RoomSync {
+export class RoomSync<TState = unknown> {
   peer: Peer | null = null
   conn: DataConnection | null = null
   role: 'host' | 'guest' | null = null
-  handlers: SyncHandlers
+  handlers: SyncHandlers<TState>
   private code = ''
-
-  constructor(handlers: SyncHandlers) {
+  constructor(handlers: SyncHandlers<TState>) {
     this.handlers = handlers
   }
 
-  setHandlers(handlers: Partial<SyncHandlers>) {
+  setHandlers(handlers: Partial<SyncHandlers<TState>>) {
     this.handlers = { ...this.handlers, ...handlers }
   }
 
-  async host(code: string): Promise<void> {
+  async host(code: string, mode: RoomMode = 'full'): Promise<void> {
     this.destroy()
     this.role = 'host'
     this.code = code.toUpperCase()
-    const id = peerIdFromCode(this.code)
+    const id = peerIdFromCode(this.code, mode)
     this.handlers.onStatus('Opening room…')
 
     this.peer = new Peer(id, {
@@ -67,11 +66,11 @@ export class RoomSync {
     })
   }
 
-  async join(code: string, guestName: string): Promise<void> {
+  async join(code: string, guestName: string, mode: RoomMode = 'full'): Promise<void> {
     this.destroy()
     this.role = 'guest'
     this.code = code.toUpperCase()
-    const hostId = peerIdFromCode(this.code)
+    const hostId = peerIdFromCode(this.code, mode)
     this.handlers.onStatus('Connecting…')
 
     this.peer = new Peer({
@@ -124,9 +123,9 @@ export class RoomSync {
         if (msg.type === 'hello' && this.role === 'host') {
           this.handlers.onGuestJoined(msg.name)
         } else if (msg.type === 'welcome') {
-          this.handlers.onState(msg.state)
+          this.handlers.onState(msg.state as TState)
         } else if (msg.type === 'state') {
-          this.handlers.onState(msg.state)
+          this.handlers.onState(msg.state as TState)
         } else if (msg.type === 'minigame-action') {
           this.handlers.onMiniAction(msg.action, msg.payload)
         }
@@ -142,12 +141,16 @@ export class RoomSync {
     if (this.conn?.open) this.conn.send(msg)
   }
 
-  broadcastState(state: GameState) {
+  broadcastState(state: TState) {
     this.send({ type: 'state', state })
   }
 
-  sendWelcome(state: GameState, guestName: string) {
-    this.send({ type: 'welcome', state: { ...state, guestName }, guestName })
+  sendWelcome(state: TState, guestName: string) {
+    this.send({
+      type: 'welcome',
+      state: { ...(state as object), guestName },
+      guestName,
+    })
   }
 
   sendMiniAction(action: string, payload?: unknown) {

@@ -6,7 +6,10 @@ export function makeRoomCode(len = 6): string {
   return Array.from(arr, (b) => ALPHABET[b % ALPHABET.length]).join('')
 }
 
+export type RoomMode = 'full' | 'apart'
+
 /** PeerJS id derived from room code so guest can dial host. */
-export function peerIdFromCode(code: string): string {
-  return `spiced-${code.trim().toUpperCase()}`
+export function peerIdFromCode(code: string, mode: RoomMode = 'full'): string {
+  const c = code.trim().toUpperCase()
+  return mode === 'apart' ? `spiced-apart-${c}` : `spiced-${c}`
 }

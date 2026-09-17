@@ -24,7 +24,12 @@ npm run build
 npm run preview
 ```
 
-### Room flow
+
+### Modes
+1. **Full Night** — classic arc: talk → photo → clip → meetup → filth (mini-games + Act Shop).
+2. **Apart Night** — stay in different rooms. Quiz rounds (asker sets the secret answer, or fixed trivia, or partner judges) mixed with apart quests. Wrong answers → gendered video/text forfeits. No meetup gate.
+
+### Room flow (Full Night)
 1. **Host** (Steve): Create room → pick intensity → tick 18+ consent → share the **6-character code**.
 2. **Guest** (Laura): Join room → enter code → consent.
 3. When both connected, Host taps **Start the night**.
@@ -52,8 +57,14 @@ Both start with **50** coins. Apart challenges drip +8 each. Wins in filth pay m
 - Private home only  
 - No recording unless both explicitly opt in  
 
+### Apart Night quick start
+1. Landing → **Apart Night**.
+2. Host creates room (names default Steve/Laura; Spicy/Fire/Hard).
+3. Guest joins with code.
+4. Host starts → quiz & quest rounds. Wrong guess = forfeit on video/call.
+
 ### Solo preview
-Lobby footer: **Preview solo on this phone** — plays the full arc as host without PeerJS (useful to demo Hard pack content).
+Lobby footer (each mode): **Preview solo on this phone** — plays the full arc as host without PeerJS (useful to demo Hard pack content).
 
 ## Privacy
 Session state lives in your two browsers and travels over PeerJS data channels. No registration, no media uploads, no game server database.

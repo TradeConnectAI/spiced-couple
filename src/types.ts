@@ -91,8 +91,8 @@ export interface GameState {
 
 export type PeerMsg =
   | { type: 'hello'; role: 'guest'; name: string }
-  | { type: 'welcome'; state: GameState; guestName: string }
-  | { type: 'state'; state: GameState }
+  | { type: 'welcome'; state: unknown; guestName: string }
+  | { type: 'state'; state: unknown }
   | { type: 'minigame-action'; action: string; payload?: unknown }
   | { type: 'ping' }
   | { type: 'pong' }

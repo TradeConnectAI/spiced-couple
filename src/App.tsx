@@ -32,10 +32,13 @@ import {
 } from './lib/gameLogic'
 import { emptyState, type GameState, type Intensity, type ShopItem } from './types'
 import { sfx } from './lib/audio'
+import { ApartNightApp } from './apart/ApartNightApp'
 
 type Screen = 'landing' | 'lobby' | 'waiting' | 'game'
+type Mode = 'pick' | 'full' | 'apart'
 
 export default function App() {
+  const [mode, setMode] = useState<Mode>('pick')
   const [screen, setScreen] = useState<Screen>('landing')
   const [role, setRole] = useState<'host' | 'guest'>('host')
   const [roomCode, setRoomCode] = useState('')
@@ -52,7 +55,7 @@ export default function App() {
   const [potatoBoom, setPotatoBoom] = useState(false)
   const [miniResolved, setMiniResolved] = useState(false)
 
-  const syncRef = useRef<RoomSync | null>(null)
+  const syncRef = useRef<RoomSync<GameState> | null>(null)
   const stateRef = useRef(state)
   const roleRef = useRef(role)
   const soloRef = useRef(solo)
@@ -125,7 +128,7 @@ export default function App() {
       syncRef.current.setHandlers({ onMiniAction: handleMiniAction })
       return syncRef.current
     }
-    const sync = new RoomSync({
+    const sync = new RoomSync<GameState>({
       onState: (s) => {
         setState(s)
         stateRef.current = s
@@ -173,7 +176,7 @@ export default function App() {
     setState(next)
     stateRef.current = next
     try {
-      await ensureSync().host(opts.code)
+      await ensureSync().host(opts.code, 'full')
       setScreen('waiting')
       setSolo(false)
     } catch (e) {
@@ -187,7 +190,7 @@ export default function App() {
     setRoomCode(opts.code)
     setState((s) => ({ ...s, guestName: opts.guestName || 'Laura', consent: true }))
     try {
-      await ensureSync().join(opts.code, opts.guestName || 'Laura')
+      await ensureSync().join(opts.code, opts.guestName || 'Laura', 'full')
       setConnected(true)
       setScreen('waiting')
     } catch (e) {
@@ -558,12 +561,33 @@ export default function App() {
     )
   }
 
-  if (screen === 'landing') {
+  if (mode === 'apart') {
+    return (
+      <ApartNightApp
+        onExit={() => {
+          syncRef.current?.destroy()
+          syncRef.current = null
+          setMode('pick')
+          setScreen('landing')
+          setConnected(false)
+          setSolo(false)
+          setState(emptyState())
+        }}
+      />
+    )
+  }
+
+  if (mode === 'pick' || screen === 'landing') {
     return (
       <Landing
-        onEnter={() => {
+        onFullNight={() => {
           sfx.tap()
+          setMode('full')
           setScreen('lobby')
+        }}
+        onApartNight={() => {
+          sfx.tap()
+          setMode('apart')
         }}
       />
     )
@@ -572,7 +596,16 @@ export default function App() {
   if (screen === 'lobby') {
     return (
       <div>
-        <Lobby onHost={handleHost} onJoin={handleJoin} status={status} error={error} />
+        <Lobby
+          onHost={handleHost}
+          onJoin={handleJoin}
+          onBack={() => {
+            setMode('pick')
+            setScreen('landing')
+          }}
+          status={status}
+          error={error}
+        />
         <div className="mx-auto max-w-md px-5 pb-8 -mt-4">
           <button
             type="button"
@@ -621,6 +654,8 @@ export default function App() {
       onEnd={() => {
         if (confirm('End this session?')) {
           syncRef.current?.destroy()
+          syncRef.current = null
+          setMode('pick')
           setScreen('landing')
           setConnected(false)
           setSolo(false)
