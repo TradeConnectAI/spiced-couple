@@ -392,6 +392,107 @@ const BASE_CHALLENGES: ChallengeCard[] = [
     intensities: ['romantic', 'spicy', 'fire', 'hard'],
     media: 'touch',
   },
+  {
+    id: 'f13',
+    title: 'Deepthroat Drill Night',
+    description:
+      "Performer (usually the loser's vibe): slow deepthroat practice on his cock — three sinks, hold on the last. Spit OK. Safeword on. 3 minutes.",
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f14',
+    title: 'Hands-Free Cock Worship',
+    description:
+      'Hands behind back. Mouth only on his cock — teasing then deep — for 2 minutes. Eye contact when you can.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f15',
+    title: 'Throatpie Fantasy Round',
+    description:
+      'While she deepthroats him, both narrate a filthy throatpie finish. Cum talk mandatory. Finish however you agree. 3 minutes.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f16',
+    title: '69 Cock-Focus',
+    description:
+      '69 with her on top. Her mouth stays dedicated to deep, wet cock-sucking while he returns oral. 3 minutes.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f17',
+    title: 'Consensual Face-Fuck Soft',
+    description:
+      'She kneels and invites it. He fucks her mouth/throat at tap pace. Enthusiastic only. 90 seconds then aftercare kiss.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f18',
+    title: 'Eat Her Out Slow',
+    description:
+      'Performer goes down on her for 3 minutes — long, slow pussy worship. She directs with softer / harder / there.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f19',
+    title: 'Clit Focus Challenge',
+    description:
+      'Tongue on her clit only for 2 minutes. No penetration. Make her moan. Then ask if she wants to finish with your mouth.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f20',
+    title: 'Face Buried Hands-Free',
+    description:
+      'Hands behind back or under you. Face buried in her pussy for 2 minutes. Come up wet. She can pull your head closer.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f21',
+    title: 'Mouth Makes Her Cum',
+    description:
+      'Orgasm race variant: try to finish her with mouth only in under 4 minutes. She coaches. Celebrate together after.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f22',
+    title: 'Face Sit If She Wants',
+    description:
+      'Offer face-sitting. If she is into it: sit, tongue out, tap for air, 90 seconds. If she passes: long slow oral instead. Her call.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['hard'],
+    media: 'touch',
+  },
+
 ]
 
 export const CHALLENGES: ChallengeCard[] = [...BASE_CHALLENGES, ...DARE_CHALLENGES]
