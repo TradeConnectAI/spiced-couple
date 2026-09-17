@@ -1,4 +1,8 @@
 export type Intensity = 'romantic' | 'spicy' | 'fire' | 'hard'
+
+/** High-level session arc (strict order). */
+export type ArcPhase = 'talk' | 'photo' | 'clip' | 'meetup' | 'filth'
+
 export type Phase =
   | 'landing'
   | 'lobby'
@@ -9,6 +13,7 @@ export type Phase =
   | 'forfeit'
   | 'shop'
   | 'challenge'
+  | 'meetup'
   | 'paused'
   | 'ended'
 
@@ -53,6 +58,8 @@ export interface ChallengeCard {
 
 export interface GameState {
   phase: Phase
+  /** Session arc phase — drives locked features & copy. */
+  arcPhase: ArcPhase
   intensity: Intensity
   round: number // 1-10
   hostName: string
@@ -77,6 +84,9 @@ export interface GameState {
   purchasedIds: string[]
   consent: boolean
   started: boolean
+  /** Meetup gate sync flags */
+  hostTogether: boolean
+  guestTogether: boolean
 }
 
 export type PeerMsg =
@@ -91,9 +101,22 @@ export const STARTING_COINS = 50
 export const TOTAL_ROUNDS = 10
 export const ROOM_CODE_LEN = 6
 
+/** Round → arc phase mapping (meetup is a gate between clip and filth). */
+export function arcPhaseForRound(round: number): ArcPhase {
+  if (round <= 3) return 'talk'
+  if (round <= 5) return 'photo'
+  if (round <= 7) return 'clip'
+  return 'filth'
+}
+
+export function isApartArc(arc: ArcPhase): boolean {
+  return arc === 'talk' || arc === 'photo' || arc === 'clip' || arc === 'meetup'
+}
+
 export function emptyState(partial?: Partial<GameState>): GameState {
   return {
     phase: 'lobby',
+    arcPhase: 'talk',
     intensity: 'spicy',
     round: 1,
     hostName: 'Steve',
@@ -118,6 +141,8 @@ export function emptyState(partial?: Partial<GameState>): GameState {
     purchasedIds: [],
     consent: false,
     started: false,
+    hostTogether: false,
+    guestTogether: false,
     ...partial,
   }
 }

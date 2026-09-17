@@ -1,50 +1,55 @@
 import type { Intensity } from '../types'
+import { arcPhaseForRound } from '../types'
 
 const ARC: Record<number, string[]> = {
+  // —— Talk (apart, rounds 1–3) ——
   1: [
-    'Two rooms. One ache. The night is just waking up.',
-    'Distance is the first tease. Feel it.',
-    'You\'re apart — and that\'s the point. Want louder.',
+    'Two rooms. One ache. Start with words — filthy, curious, hungry.',
+    'Distance is the first tease. Ask what turns them on. Mean it.',
+    'You\'re apart — and that\'s the point. Talk dirty. Want louder.',
   ],
   2: [
-    'The walls feel thinner. Your pulse doesn\'t care about doors.',
-    'Still separate. Still starving. Good.',
-    'Texts and breath and nothing else — yet.',
+    'Still separate. Still starving. Keep the Q&A filthy.',
+    'Texts and breath and nothing else — yet. Make them confess.',
+    'The walls feel thinner when you ask the right questions.',
   ],
   3: [
-    'Last stretch of solitude. Make the wanting unbearable.',
-    'One more round apart. Then the orbit pulls tighter.',
-    'Desperate rooms. Desperate hands. Almost time.',
+    'Last stretch of naughty talk. Make the wanting unbearable.',
+    'One more round of filthy conversation. Then the photos begin.',
+    'Desperate rooms. Desperate answers. Almost time to show, not tell.',
   ],
+  // —— Photos (apart, rounds 4–5) ——
   4: [
-    'Hallways exist for a reason. Use them.',
-    'Closer now. Doorways. Almost-touching.',
-    'The house is shrinking. So is your patience.',
+    'Words aren\'t enough anymore. Show them. Photo dares — send via your own messages.',
+    'Still apart. The camera is the tease. No uploads here — just instructions.',
+    'Prove the ache. Snap it. Send it yourselves. Stay in your rooms.',
   ],
   5: [
-    'Same air. Different skin. Crossing paths on purpose.',
-    'Approaching. The gravity is rude and perfect.',
-    'You can smell each other. Don\'t rush the ruin.',
+    'One more photo stretch. Make them need the real thing.',
+    'Lens only. Hands off each other. Hunger on full display.',
+    'Last still frames before the clips. Stay apart. Stay starving.',
   ],
+  // —— Clips (apart, rounds 6–7) ——
   6: [
-    'Threshold energy. One more tease before you collide.',
-    'Door frames were invented for pinning people.',
-    'Almost together. The tension is doing overtime.',
+    'Short clips now — 5 to 15 seconds. Motion is a promise.',
+    'Still apart. A few filthy seconds on video. Send it yourselves.',
+    'Moving pictures. Moving blood. The meetup is coming.',
   ],
   7: [
-    'Same room. Same heat. The gloves are off.',
-    'Together at last. Make it count.',
-    'Bodies in the same space — finally. Filth welcome.',
+    'Last apart round. Make the clip so good they walk to you.',
+    'One more short film of wanting. Then: same room. No excuses.',
+    'Final stretch of solitude. After this — you go find each other.',
   ],
+  // —— Filth (together, rounds 8–10) ——
   8: [
-    'No more pretending you\'re civilized.',
-    'Deeper. Louder. Hungrier.',
-    'The night owns you both now.',
+    'Same room. Same heat. Mini-games, coins, Act Shop — gloves off.',
+    'Together at last. Compete. Forfeit. Buy acts. Filth welcome.',
+    'Bodies in the same space — finally. Earn Spice Coins. Spend them.',
   ],
   9: [
-    'Near the edge of the arc. Leave nothing unsaid. Or undone.',
-    'Round nine. Reputation: ruined (consensually).',
-    'You know what you want. Take it carefully and completely.',
+    'No more pretending you\'re civilized. Deeper. Louder. Hungrier.',
+    'Round nine. Shop open. Forfeits real. Reputation: ruined (consensually).',
+    'You know what you want. Win it. Buy it. Take it carefully and completely.',
   ],
   10: [
     'Finale. Spend the coins. Spend yourselves.',
@@ -55,9 +60,21 @@ const ARC: Record<number, string[]> = {
 
 const HARD_SPICE: Partial<Record<number, string>> = {
   3: 'Hard mode reminder: safewords stay on. Enthusiasm stays louder.',
-  6: 'You chose Hard. Deep throat energy is unlocked. Consent still wears the crown.',
+  7: 'You chose Hard. After meetup, deep throat energy unlocks. Consent still wears the crown.',
   8: 'Anal, spit, rough — only if both of you are grinning about it.',
   10: 'Go as filthy as you paid for. Then aftercare like champions.',
+}
+
+const PHASE_LABEL: Record<string, string> = {
+  talk: 'Apart · Naughty talk',
+  photo: 'Apart · Photos',
+  clip: 'Apart · Short clips',
+  meetup: 'Meetup',
+  filth: 'Together · Games & filth',
+}
+
+export function arcLabelForRound(round: number): string {
+  return PHASE_LABEL[arcPhaseForRound(round)] ?? PHASE_LABEL.talk
 }
 
 export function narratorFor(round: number, intensity: Intensity): string {

@@ -16,7 +16,7 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
         <span className="text-cream text-glow-crimson">Couple</span>
       </h1>
       <p className="mt-4 max-w-sm text-center text-muted leading-relaxed animate-fade-in" style={{ animationDelay: '0.1s' }}>
-        Competitive mini-games. Fake money. Real heat. A 10-round arc from desperate rooms to absolute filth.
+        Apart first — naughty talk, photos, clips. Then meetup. Then mini-games, Spice Coins & filthy forfeits together.
       </p>
 
       <div className="mt-10 w-full max-w-sm space-y-3 animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -31,11 +31,11 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
       </div>
 
       <div className="mt-12 flex flex-wrap justify-center gap-2 text-[10px] uppercase tracking-widest text-muted/80">
-        <span className="rounded-full border border-white/10 px-3 py-1">Dobble</span>
-        <span className="rounded-full border border-white/10 px-3 py-1">Card War</span>
-        <span className="rounded-full border border-white/10 px-3 py-1">Reaction</span>
-        <span className="rounded-full border border-white/10 px-3 py-1">Hot Potato</span>
-        <span className="rounded-full border border-white/10 px-3 py-1">Act Shop</span>
+        <span className="rounded-full border border-white/10 px-3 py-1">Talk</span>
+        <span className="rounded-full border border-white/10 px-3 py-1">Photos</span>
+        <span className="rounded-full border border-white/10 px-3 py-1">Clips</span>
+        <span className="rounded-full border border-rose/30 px-3 py-1 text-rose">Meetup</span>
+        <span className="rounded-full border border-gold/30 px-3 py-1 text-gold-soft">Filth</span>
       </div>
     </div>
   )

@@ -8,6 +8,7 @@ import { ResultBanner } from './components/ResultBanner'
 import { ForfeitView } from './components/ForfeitView'
 import { ActShop } from './components/ActShop'
 import { ChallengeView } from './components/ChallengeView'
+import { MeetupGate } from './components/MeetupGate'
 import { HouseRulesBanner } from './components/HouseRules'
 import { Dobble } from './components/MiniGames/Dobble'
 import { CardWar } from './components/MiniGames/CardWar'
@@ -18,15 +19,16 @@ import { RoomSync } from './peer/sync'
 import { SHOP_ITEMS } from './content/shop'
 import {
   applyWin,
-  beginMiniGame,
   buyAct,
   clearPendingAct,
+  completeChallenge,
   completeForfeit,
+  continueFromNarrator,
   goToForfeit,
+  markTogether,
   skipForfeit,
   startChallenge,
   startSession,
-  advanceRound,
 } from './lib/gameLogic'
 import { emptyState, type GameState, type Intensity, type ShopItem } from './types'
 import { sfx } from './lib/audio'
@@ -110,6 +112,9 @@ export default function App() {
         pushState(clearPendingAct(stateRef.current))
       } else if (action === 'shop-continue' && isHost) {
         pushState(startChallenge(stateRef.current))
+      } else if (action === 'meetup-ready' && isHost) {
+        const who = (payload as { who: 'host' | 'guest' }).who
+        pushState(markTogether(stateRef.current, who, false))
       }
     },
     [pushState],
@@ -251,6 +256,16 @@ export default function App() {
     if (role === 'host' || solo) pushState(applyWin(stateRef.current, winner))
   }
 
+  const onMeetupReady = () => {
+    if (solo || role === 'host') {
+      pushState(markTogether(stateRef.current, role, solo))
+    } else {
+      syncRef.current?.sendMiniAction('meetup-ready', { who: 'guest' })
+      // Optimistic local flag until host state arrives
+      setState((s) => ({ ...s, guestTogether: true }))
+    }
+  }
+
   const isHost = role === 'host' || solo
 
   const renderGameBody = () => {
@@ -263,7 +278,12 @@ export default function App() {
             <Button
               variant="gold"
               className="w-full"
-              onClick={() => pushState({ ...state, phase: 'narrator' })}
+              onClick={() =>
+                pushState({
+                  ...state,
+                  phase: state.arcPhase === 'meetup' ? 'meetup' : 'narrator',
+                })
+              }
             >
               Resume
             </Button>
@@ -304,7 +324,13 @@ export default function App() {
             variant="ghost"
             className="w-full"
             onClick={() =>
-              pushState({ ...state, phase: 'shop', shopOpen: true, round: 10 })
+              pushState({
+                ...state,
+                phase: 'shop',
+                shopOpen: true,
+                round: 10,
+                arcPhase: 'filth',
+              })
             }
           >
             Free-play Act Shop
@@ -313,21 +339,53 @@ export default function App() {
       )
     }
 
+    if (state.phase === 'meetup' || state.arcPhase === 'meetup') {
+      return (
+        <MeetupGate
+          hostName={state.hostName}
+          guestName={state.guestName}
+          hostTogether={state.hostTogether}
+          guestTogether={state.guestTogether}
+          myRole={role}
+          solo={solo}
+          onReady={onMeetupReady}
+        />
+      )
+    }
+
     if (state.phase === 'narrator') {
       return (
         <Narrator
           line={state.narratorLine}
           round={state.round}
+          arcPhase={state.arcPhase}
           isHost={isHost}
           onContinue={() => {
             resetMiniEphemeral()
-            pushState(beginMiniGame(stateRef.current))
+            pushState(continueFromNarrator(stateRef.current))
           }}
         />
       )
     }
 
     if (state.phase === 'minigame') {
+      // Guard: should only happen in filth
+      if (state.arcPhase !== 'filth') {
+        return (
+          <div className="text-center space-y-4">
+            <p className="text-muted">Mini-games unlock after meetup.</p>
+            {isHost && (
+              <Button
+                variant="gold"
+                className="w-full"
+                onClick={() => pushState(startChallenge(stateRef.current))}
+              >
+                Continue to challenge
+              </Button>
+            )}
+          </div>
+        )
+      }
       const seed = state.seed + state.round * 13
       return (
         <div className="space-y-4">
@@ -407,7 +465,6 @@ export default function App() {
             myRole={role}
             onDone={() => {
               if (solo || role === 'host') {
-                // Host can always advance; if guest is target they send action
                 if (role === state.forfeitTarget || solo || role === 'host') {
                   if (role === 'guest' && state.forfeitTarget === 'guest') {
                     syncRef.current?.sendMiniAction('forfeit-done')
@@ -433,6 +490,22 @@ export default function App() {
     }
 
     if (state.phase === 'shop') {
+      if (state.arcPhase !== 'filth') {
+        return (
+          <div className="text-center space-y-4 py-8">
+            <p className="text-muted">Act Shop unlocks after you meet up.</p>
+            {isHost && (
+              <Button
+                variant="gold"
+                className="w-full"
+                onClick={() => pushState(startChallenge(stateRef.current))}
+              >
+                Skip to challenge
+              </Button>
+            )}
+          </div>
+        )
+      }
       return (
         <div className="space-y-3">
           <HouseRulesBanner compact />
@@ -471,7 +544,7 @@ export default function App() {
             isHost={isHost}
             onComplete={() => {
               resetMiniEphemeral()
-              pushState(advanceRound(stateRef.current))
+              pushState(completeChallenge(stateRef.current))
             }}
           />
         </div>
@@ -530,6 +603,11 @@ export default function App() {
         }}
       />
     )
+  }
+
+  // Meetup is full-screen; still wrap for coins if not meetup phase UI
+  if (state.phase === 'meetup' || state.arcPhase === 'meetup') {
+    return renderGameBody()
   }
 
   return (

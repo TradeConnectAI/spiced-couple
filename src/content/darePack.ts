@@ -229,30 +229,39 @@ export const DARE_SHOP: ShopItem[] = [
 ]
 
 export const DARE_CHALLENGES: ChallengeCard[] = [
-  // Mild → romantic/spicy, rounds 1-3 apart friendly where possible
-  { id: 'dp-c01', title: 'Thigh Tease Text', description: 'If apart: voice-note describing kissing their inner thighs and stopping short. If together: do it.', roundMin: 1, roundMax: 4, intensities: ['romantic', 'spicy'], media: 'audio' },
-  { id: 'dp-c02', title: 'Stomach Map', description: 'Kiss every inch of their stomach with only your lips — no hands. (Photo proof if apart.)', roundMin: 1, roundMax: 5, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
-  { id: 'dp-c05', title: 'Tongue Word', description: 'Spell a dirty word on their skin using only your tongue.', roundMin: 2, roundMax: 6, intensities: ['spicy', 'fire'], media: 'touch' },
-  { id: 'dp-c10', title: 'Above-Waist Mouth', description: 'Explore with only your mouth for two minutes — above the waist first.', roundMin: 2, roundMax: 5, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
-  { id: 'dp-c29', title: 'Side-by-Side Song', description: 'Try side-by-side mutual oral for the length of one song.', roundMin: 7, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'dp-c30', title: 'Oral-Only Timer', description: 'Oral-only round: no penetration until one of you taps out or 5 minutes end.', roundMin: 7, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'dp-c33', title: 'Never-Tried Position', description: 'Try a new position you’ve never done before — right now.', roundMin: 7, roundMax: 10, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
+  // Talk-friendly (apart)
+  { id: 'dp-c01', title: 'Thigh Tease Text', description: 'Voice-note describing kissing their inner thighs and stopping short. Send via your own messages.', roundMin: 1, roundMax: 3, intensities: ['romantic', 'spicy'], media: 'audio' },
+  { id: 'dp-c77', title: 'Say It Plain', description: 'Tell them exactly what you want, out loud (voice note), no hints — then they reply the same way.', roundMin: 1, roundMax: 3, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'audio' },
+  { id: 'dp-c70a', title: 'Narrate the Want', description: 'Voice note: narrate what you wish you were doing to them right now — don\'t stop talking for 30 seconds.', roundMin: 1, roundMax: 3, intensities: ['spicy', 'fire', 'hard'], media: 'audio' },
+
+  // Photo-friendly (apart)
+  { id: 'dp-c02', title: 'Stomach Map Photo', description: 'Photo proof: kiss every inch of your own stomach trail marked — or show where you want their lips. Send yourselves.', roundMin: 4, roundMax: 5, intensities: ['romantic', 'spicy', 'fire'], media: 'photo' },
+  { id: 'dp-c57p', title: 'Favourite Touch Spot', description: 'Photo: point to (or mark) your favourite place to be touched. Caption how you want it.', roundMin: 4, roundMax: 5, intensities: ['romantic', 'spicy', 'fire'], media: 'photo' },
+
+  // Clip-friendly (apart)
+  { id: 'dp-c65v', title: 'Watch-Me Clip', description: '10–15 sec clip of self-pleasure tease while looking at the camera. Send via your chat — app never uploads.', roundMin: 6, roundMax: 7, intensities: ['spicy', 'fire', 'hard'], media: 'video' },
+  { id: 'dp-c68v', title: 'Blindfold Tease Clip', description: '10 sec: blindfold yourself, breathe, touch your own lips/neck. Send the clip yourselves.', roundMin: 6, roundMax: 7, intensities: ['romantic', 'spicy', 'fire'], media: 'video' },
+
+  // Filth (together) — touch acts
+  { id: 'dp-c10', title: 'Above-Waist Mouth', description: 'Explore with only your mouth for two minutes — above the waist first.', roundMin: 8, roundMax: 10, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
+  { id: 'dp-c05', title: 'Tongue Word', description: 'Spell a dirty word on their skin using only your tongue.', roundMin: 8, roundMax: 10, intensities: ['spicy', 'fire'], media: 'touch' },
+  { id: 'dp-c29', title: 'Side-by-Side Song', description: 'Try side-by-side mutual oral for the length of one song.', roundMin: 8, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
+  { id: 'dp-c30', title: 'Oral-Only Timer', description: 'Oral-only round: no penetration until one of you taps out or 5 minutes end.', roundMin: 8, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
+  { id: 'dp-c33', title: 'Never-Tried Position', description: 'Try a new position you’ve never done before — right now.', roundMin: 8, roundMax: 10, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
   { id: 'dp-c34', title: 'New Room (Home)', description: 'Have sex in a room you’ve never used before (private home only).', roundMin: 8, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'dp-c35', title: 'Mirror Watch', description: 'Have sex in front of a mirror and watch the entire time.', roundMin: 7, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'dp-c36', title: 'Ride Eye Minute', description: 'Ride them without breaking eye contact for one full minute.', roundMin: 7, roundMax: 10, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
+  { id: 'dp-c35', title: 'Mirror Watch', description: 'Have sex in front of a mirror and watch the entire time.', roundMin: 8, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
+  { id: 'dp-c36', title: 'Ride Eye Minute', description: 'Ride them without breaking eye contact for one full minute.', roundMin: 8, roundMax: 10, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
   { id: 'dp-c40', title: 'Slow Face Down', description: 'Hold them face down, hips raised, and enter as slowly as you can manage.', roundMin: 8, roundMax: 10, intensities: ['hard'], media: 'touch' },
-  { id: 'dp-c45', title: 'No Hands Sex', description: 'Have sex without using your hands at all.', roundMin: 7, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'dp-c48', title: 'First Time Replay', description: 'Recreate the first time you slept together — set the scene, then start.', roundMin: 6, roundMax: 10, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
-  { id: 'dp-c49', title: 'Complete Darkness', description: 'Intimacy in complete darkness this round.', roundMin: 4, roundMax: 8, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
+  { id: 'dp-c45', title: 'No Hands Sex', description: 'Have sex without using your hands at all.', roundMin: 8, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
+  { id: 'dp-c48', title: 'First Time Replay', description: 'Recreate the first time you slept together — set the scene, then start.', roundMin: 8, roundMax: 10, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
   { id: 'dp-c51', title: 'Position Roulette', description: '30s each: missionary → on top → from behind → side → standing — repeat.', roundMin: 8, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'dp-c53', title: 'Full Body Five', description: 'Full-body massage — don’t skip anywhere — for five minutes.', roundMin: 3, roundMax: 7, intensities: ['romantic', 'spicy'], media: 'touch' },
-  { id: 'dp-c57', title: 'Guide Their Hand', description: 'Show them your favourite way to be touched — guide their hand.', roundMin: 2, roundMax: 6, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
-  { id: 'dp-c65', title: 'Watch Each Other', description: 'Mutual self-pleasure while watching each other for two minutes.', roundMin: 4, roundMax: 8, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'dp-c68', title: 'Blindfold Tease', description: 'Blindfold them and tease with feather / silk / breath for three minutes.', roundMin: 3, roundMax: 7, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
-  { id: 'dp-c69', title: '30-Min Foreplay', description: 'Extended foreplay only — minimum 30 minutes before any penetration.', roundMin: 5, roundMax: 10, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
-  { id: 'dp-c70', title: 'Narrate Everything', description: 'Narrate what you’re doing out loud as you do it — don’t stop talking.', roundMin: 4, roundMax: 9, intensities: ['spicy', 'fire', 'hard'], media: 'audio' },
-  { id: 'dp-c72', title: 'Zero Decisions', description: 'Give up every decision for ten minutes — they choose everything (within limits).', roundMin: 5, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'dp-c75', title: 'Halfway Switch', description: 'Take turns being completely in charge — switch at the halfway point.', roundMin: 4, roundMax: 9, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'dp-c77', title: 'Say It Plain', description: 'Tell them exactly what you want, out loud, no hints — then they do it.', roundMin: 3, roundMax: 8, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'audio' },
-  { id: 'dp-c78', title: 'Role Swap Night', description: 'Swap your usual roles tonight — whoever usually leads, follows.', roundMin: 4, roundMax: 10, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'touch' },
+  { id: 'dp-c53', title: 'Full Body Five', description: 'Full-body massage — don’t skip anywhere — for five minutes.', roundMin: 8, roundMax: 10, intensities: ['romantic', 'spicy'], media: 'touch' },
+  { id: 'dp-c57', title: 'Guide Their Hand', description: 'Show them your favourite way to be touched — guide their hand.', roundMin: 8, roundMax: 10, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
+  { id: 'dp-c65', title: 'Watch Each Other', description: 'Mutual self-pleasure while watching each other for two minutes.', roundMin: 8, roundMax: 10, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
+  { id: 'dp-c68', title: 'Blindfold Tease', description: 'Blindfold them and tease with feather / silk / breath for three minutes.', roundMin: 8, roundMax: 10, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
+  { id: 'dp-c69', title: '30-Min Foreplay', description: 'Extended foreplay only — minimum 30 minutes before any penetration.', roundMin: 8, roundMax: 10, intensities: ['romantic', 'spicy', 'fire'], media: 'touch' },
+  { id: 'dp-c70', title: 'Narrate Everything', description: 'Narrate what you’re doing out loud as you do it — don’t stop talking.', roundMin: 8, roundMax: 10, intensities: ['spicy', 'fire', 'hard'], media: 'audio' },
+  { id: 'dp-c72', title: 'Zero Decisions', description: 'Give up every decision for ten minutes — they choose everything (within limits).', roundMin: 8, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
+  { id: 'dp-c75', title: 'Halfway Switch', description: 'Take turns being completely in charge — switch at the halfway point.', roundMin: 8, roundMax: 10, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
+  { id: 'dp-c78', title: 'Role Swap Night', description: 'Swap your usual roles tonight — whoever usually leads, follows.', roundMin: 8, roundMax: 10, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'touch' },
 ]

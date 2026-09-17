@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import type { GameState } from '../types'
+import { isApartArc } from '../types'
 import { CoinPill } from './ui/CoinPill'
 import { ProgressDots } from './ui/ProgressDots'
 import { isMuted, setMuted, sfx } from '../lib/audio'
+import { arcLabelForRound } from '../content/narrator'
 
 export function GameShell({
   state,
@@ -21,6 +23,9 @@ export function GameShell({
 }) {
   const [mute, setMute] = useState(isMuted())
   const pop = state.phase === 'result'
+  const apart = isApartArc(state.arcPhase)
+  const phaseLabel =
+    state.arcPhase === 'meetup' ? 'Meetup' : arcLabelForRound(state.round)
 
   return (
     <div className={`bg-heat min-h-dvh safe-pad flex flex-col ${state.phase === 'result' && state.lastWinner === myRole ? 'animate-flash-win' : state.phase === 'result' && state.lastWinner && state.lastWinner !== 'tie' && state.lastWinner !== myRole ? 'animate-flash-lose' : ''}`}>
@@ -55,6 +60,20 @@ export function GameShell({
               End
             </button>
           </div>
+        </div>
+        <div className="mb-2 flex items-center justify-center gap-2">
+          <span
+            className={`rounded-full border px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${
+              apart
+                ? 'border-rose/40 text-rose bg-rose/10'
+                : 'border-gold/50 text-gold-soft bg-gold/15'
+            }`}
+          >
+            {apart ? 'Apart' : 'Together'}
+          </span>
+          <span className="text-[10px] uppercase tracking-widest text-muted truncate max-w-[14rem]">
+            {phaseLabel}
+          </span>
         </div>
         <ProgressDots round={state.round} />
         <div className="mt-3 flex justify-between gap-2">

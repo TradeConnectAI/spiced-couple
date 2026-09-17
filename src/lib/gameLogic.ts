@@ -2,9 +2,12 @@ import { pickForfeit } from '../content/forfeits'
 import { pickChallenge } from '../content/challenges'
 import { narratorFor } from '../content/narrator'
 import type { GameState, MiniGameKind, ShopItem } from '../types'
-import { TOTAL_ROUNDS } from '../types'
+import { TOTAL_ROUNDS, arcPhaseForRound } from '../types'
 
 const GAMES: MiniGameKind[] = ['dobble', 'cardwar', 'reaction', 'hotpotato']
+
+/** Small coin drip during apart challenges so the Act Shop has fuel later. */
+const APART_CHALLENGE_COINS = 8
 
 export function nextMiniGame(round: number, seed: number): MiniGameKind {
   return GAMES[(round + seed) % GAMES.length]
@@ -29,7 +32,6 @@ export function applyWin(
   if (winner === 'host') s.hostCoins += coinReward
   else s.guestCoins += coinReward
 
-  // Forfeit for loser
   const forfeit = pickForfeit(s.intensity, s.usedForfeitIds, s.seed + s.round * 17)
   s.currentForfeit = forfeit
   s.forfeitTarget = loser
@@ -59,7 +61,11 @@ export function skipForfeit(state: GameState, who: 'host' | 'guest'): GameState 
   return goToShopOrChallenge(next)
 }
 
+/** Act Shop is locked until filth phase. */
 export function goToShopOrChallenge(state: GameState): GameState {
+  if (state.arcPhase !== 'filth') {
+    return startChallenge(state)
+  }
   return { ...state, phase: 'shop', shopOpen: true, pendingAct: null, pendingActBuyer: null }
 }
 
@@ -68,6 +74,7 @@ export function buyAct(
   item: ShopItem,
   buyer: 'host' | 'guest',
 ): GameState | { error: string } {
+  if (state.arcPhase !== 'filth') return { error: 'Act Shop unlocks after you meet up' }
   const bal = buyer === 'host' ? state.hostCoins : state.guestCoins
   if (bal < item.price) return { error: 'Not enough Spice Coins' }
   const next = { ...state }
@@ -99,22 +106,92 @@ export function startChallenge(state: GameState): GameState {
   }
 }
 
+/** After a challenge: drip coins in apart phases, then advance or open meetup. */
+export function completeChallenge(state: GameState): GameState {
+  let s = { ...state }
+  if (s.arcPhase === 'talk' || s.arcPhase === 'photo' || s.arcPhase === 'clip') {
+    s.hostCoins += APART_CHALLENGE_COINS
+    s.guestCoins += APART_CHALLENGE_COINS
+    s.lastCoinDelta = APART_CHALLENGE_COINS
+  }
+
+  // Finished last clip round → meetup gate before filth
+  if (s.round === 7 && s.arcPhase === 'clip') {
+    return {
+      ...s,
+      phase: 'meetup',
+      arcPhase: 'meetup',
+      hostTogether: false,
+      guestTogether: false,
+      currentChallenge: null,
+      currentMiniGame: null,
+      narratorLine: 'Go to the same room now. The teasing ends when you\'re face to face.',
+    }
+  }
+
+  return advanceRound(s)
+}
+
+export function markTogether(
+  state: GameState,
+  who: 'host' | 'guest',
+  solo = false,
+): GameState {
+  const next = {
+    ...state,
+    hostTogether: who === 'host' || solo ? true : state.hostTogether,
+    guestTogether: who === 'guest' || solo ? true : state.guestTogether,
+  }
+  if (solo) {
+    next.hostTogether = true
+    next.guestTogether = true
+  }
+  if (next.hostTogether && next.guestTogether) {
+    return enterFilth(next)
+  }
+  return next
+}
+
+export function enterFilth(state: GameState): GameState {
+  const round = 8
+  return {
+    ...state,
+    round,
+    arcPhase: 'filth',
+    phase: 'narrator',
+    seed: state.seed + round * 99,
+    narratorLine: narratorFor(round, state.intensity),
+    currentMiniGame: null,
+    currentChallenge: null,
+    currentForfeit: null,
+    forfeitTarget: null,
+    lastWinner: null,
+    shopOpen: false,
+    pendingAct: null,
+    hostTogether: true,
+    guestTogether: true,
+  }
+}
+
 export function advanceRound(state: GameState): GameState {
   if (state.round >= TOTAL_ROUNDS) {
     return {
       ...state,
       phase: 'ended',
-      narratorLine: 'Arc complete. Free shop & play whenever you want — or start a new night.',
+      narratorLine:
+        'Arc complete. Free shop & play whenever you want — or start a new night.',
       currentMiniGame: null,
       currentChallenge: null,
     }
   }
   const round = state.round + 1
   const seed = state.seed + round * 99
+  const arcPhase = arcPhaseForRound(round)
   return {
     ...state,
     round,
     seed,
+    arcPhase,
     phase: 'narrator',
     narratorLine: narratorFor(round, state.intensity),
     currentMiniGame: null,
@@ -128,6 +205,10 @@ export function advanceRound(state: GameState): GameState {
 }
 
 export function beginMiniGame(state: GameState): GameState {
+  if (state.arcPhase !== 'filth') {
+    // Safety: never start mini-games before filth
+    return startChallenge(state)
+  }
   const game = nextMiniGame(state.round, state.seed)
   return {
     ...state,
@@ -137,14 +218,23 @@ export function beginMiniGame(state: GameState): GameState {
   }
 }
 
+/** From narrator: apart → challenge; filth → mini-game. */
+export function continueFromNarrator(state: GameState): GameState {
+  if (state.arcPhase === 'filth') return beginMiniGame(state)
+  return startChallenge(state)
+}
+
 export function startSession(state: GameState): GameState {
   return {
     ...state,
     started: true,
     round: 1,
+    arcPhase: 'talk',
     phase: 'narrator',
     narratorLine: narratorFor(1, state.intensity),
     hostCoins: 50,
     guestCoins: 50,
+    hostTogether: false,
+    guestTogether: false,
   }
 }

@@ -1,48 +1,397 @@
 import type { ChallengeCard, Intensity } from '../types'
 import { DARE_CHALLENGES } from './darePack'
 
+/**
+ * Round map:
+ * 1–3 talk (text/audio) · 4–5 photo · 6–7 clip (video) · 8–10 filth (touch)
+ * Media is never uploaded by the app — players send via their own messages.
+ */
 const BASE_CHALLENGES: ChallengeCard[] = [
-  // Rounds 1-3: apart / desperate rooms
-  { id: 'c1', title: 'Apartment Ache', description: 'You\'re in different rooms. Text them one filthy thing you\'d do if the door opened right now.', roundMin: 1, roundMax: 3, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'text' },
-  { id: 'c2', title: 'Voice Across the Wall', description: 'Send a 15-second voice note of your breathing getting heavier — no words required.', roundMin: 1, roundMax: 3, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'audio' },
-  { id: 'c3', title: 'Doorway Tease Photo', description: 'Photo: just your hand on the doorframe / doorknob, captioned like you\'re about to walk in.', roundMin: 1, roundMax: 3, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'photo' },
-  { id: 'c4', title: 'Countdown Text', description: 'Text: "I\'m touching myself for 60 seconds thinking of you. Starting now." Then do it.', roundMin: 1, roundMax: 3, intensities: ['spicy', 'fire', 'hard'], media: 'text' },
-  { id: 'c5', title: 'Mirror Confession', description: 'Voice note while looking in a mirror: tell them what you look like turned on.', roundMin: 1, roundMax: 3, intensities: ['spicy', 'fire', 'hard'], media: 'audio' },
-  { id: 'c6', title: 'Undress Relay', description: 'Each of you removes one item. Send proof photo. Stay apart.', roundMin: 1, roundMax: 3, intensities: ['spicy', 'fire', 'hard'], media: 'photo' },
-  { id: 'c7', title: 'Filthy Forecast', description: 'Text a play-by-play of what happens when you\'re finally in the same room tonight.', roundMin: 1, roundMax: 3, intensities: ['fire', 'hard'], media: 'text' },
-  { id: 'c8', title: 'Moan Through the Wall', description: 'Make a sound loud enough they might hear through the wall / door. Then text "did you hear that?"', roundMin: 1, roundMax: 3, intensities: ['fire', 'hard'], media: 'audio' },
-  { id: 'c9', title: 'Open Legs Photo', description: 'Send a photo from the waist down — suggestive, not shy. Stay in your room.', roundMin: 1, roundMax: 3, intensities: ['fire', 'hard'], media: 'photo' },
-  { id: 'c10', title: 'Edge Alone', description: 'Edge yourself once alone. Text them the second you stop. No orgasm.', roundMin: 1, roundMax: 3, intensities: ['hard'], media: 'text' },
-  { id: 'c11', title: 'Spit Selfie', description: 'Photo: spit on your fingers or chest. Caption it for them.', roundMin: 1, roundMax: 3, intensities: ['hard'], media: 'photo' },
-  { id: 'c12', title: 'Begging Voicemail', description: '60-second voice note begging them to come find you and use you. Absolute filth.', roundMin: 1, roundMax: 3, intensities: ['hard'], media: 'audio' },
+  // —— Talk / Q&A (apart) ——
+  {
+    id: 't1',
+    title: 'What Turns You On',
+    description:
+      'Text them three things that turn you on about them — be specific, be filthy. They reply with three of theirs.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'text',
+  },
+  {
+    id: 't2',
+    title: 'Voice Confession',
+    description:
+      'Send a 20–40 second voice note answering: "What do you want me to do to you tonight?" No filters.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'audio',
+  },
+  {
+    id: 't3',
+    title: 'Filthy Q&A',
+    description:
+      'Text them one dirty question. They must answer in detail, then ask you one back. Two rounds minimum.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'text',
+  },
+  {
+    id: 't4',
+    title: 'Breath Across the Wall',
+    description:
+      'Send a voice note of your breathing getting heavier — whisper their name once at the end.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'audio',
+  },
+  {
+    id: 't5',
+    title: 'Fantasy Forecast',
+    description:
+      'Text a play-by-play of what happens the second you\'re in the same room. Leave nothing vague.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'text',
+  },
+  {
+    id: 't6',
+    title: 'Turn-On Interrogation',
+    description:
+      'Voice note: ask them "harder, slower, or dirtier?" — then tell them your answer with a moan.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'audio',
+  },
+  {
+    id: 't7',
+    title: 'Forbidden Wish',
+    description:
+      'Text the filthiest thing you\'ve wanted to try with them but haven\'t said out loud until now.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['fire', 'hard'],
+    media: 'text',
+  },
+  {
+    id: 't8',
+    title: 'Begging Voicemail',
+    description:
+      '60-second voice note begging them to come find you and use you. Absolute filth. Stay in your room.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['hard'],
+    media: 'audio',
+  },
+  {
+    id: 't9',
+    title: 'Edge Alone, Report',
+    description:
+      'Edge yourself once alone. Text them the second you stop — describe how close you got. No orgasm.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['hard'],
+    media: 'text',
+  },
+  {
+    id: 't10',
+    title: 'Mirror Dirty Talk',
+    description:
+      'Voice note while looking in a mirror: tell them exactly what you look like turned on right now.',
+    roundMin: 1,
+    roundMax: 3,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'audio',
+  },
 
-  // Rounds 4-6: approaching
-  { id: 'c13', title: 'Hallway Heat', description: 'Meet in the hallway. Kiss for 30 seconds. No hands below the waist. Return to positions.', roundMin: 4, roundMax: 6, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'c14', title: 'Doorway Grind', description: 'In a doorway: press together and grind for 45 seconds. Clothes on.', roundMin: 4, roundMax: 6, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'c15', title: 'Same Room, No Touch', description: 'Sit in the same room. Eye contact only for 60 seconds. First to look away owes a kiss.', roundMin: 4, roundMax: 6, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'c16', title: 'Strip in the Door', description: 'Stand in the doorway and remove one piece while they watch from inside.', roundMin: 4, roundMax: 6, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'c17', title: 'Wall Pin', description: 'Pin them gently to the wall. Whisper something filthy. Walk away.', roundMin: 4, roundMax: 6, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'c18', title: 'Hand Down Pants', description: 'In the hallway or doorway: hand down their pants / under clothes for 30 seconds. Then stop.', roundMin: 4, roundMax: 6, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'c19', title: 'Kneel at the Threshold', description: 'Kneel in the doorway. They stand over you. Eye contact. 30 seconds. Then stand.', roundMin: 4, roundMax: 6, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'c20', title: 'Mouth Preview', description: 'Drop to your knees in the hallway and mouth them over clothes for 20 seconds.', roundMin: 4, roundMax: 6, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'c21', title: 'Spit Trade', description: 'Meet mid-home. Spit into each other\'s mouths. Kiss. Separate again.', roundMin: 4, roundMax: 6, intensities: ['hard'], media: 'touch' },
-  { id: 'c22', title: 'Ass Grab Claim', description: 'Grab their ass hard in the hallway, pull them against you, say "mine," release.', roundMin: 4, roundMax: 6, intensities: ['hard'], media: 'touch' },
-  { id: 'c23', title: 'Finger Taste', description: 'Touch yourself, then put wet fingers in their mouth in the doorway.', roundMin: 4, roundMax: 6, intensities: ['hard'], media: 'touch' },
-  { id: 'c24', title: 'Rough Doorway Kiss', description: 'Kiss like you\'re starving — biting, hair pulling, light choke if agreed — 45 seconds.', roundMin: 4, roundMax: 6, intensities: ['hard'], media: 'touch' },
+  // —— Photos (apart) ——
+  {
+    id: 'p1',
+    title: 'Doorway Tease',
+    description:
+      'Photo dare: hand on the doorframe / doorknob, captioned like you\'re about to walk in. Send via your own messages — the app never uploads.',
+    roundMin: 4,
+    roundMax: 5,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'photo',
+  },
+  {
+    id: 'p2',
+    title: 'Undress Relay Still',
+    description:
+      'Each of you removes one item. Send a proof photo. Stay apart. Exchange via your own chat.',
+    roundMin: 4,
+    roundMax: 5,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'photo',
+  },
+  {
+    id: 'p3',
+    title: 'Wanting Face',
+    description:
+      'Send a photo of your face looking exactly how you feel — hungry, flushed, impatient. Caption optional.',
+    roundMin: 4,
+    roundMax: 5,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'photo',
+  },
+  {
+    id: 'p4',
+    title: 'Waist-Down Hint',
+    description:
+      'Suggestive photo from the waist down — teasing, not shy. Stay in your room. Send yourselves.',
+    roundMin: 4,
+    roundMax: 5,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'photo',
+  },
+  {
+    id: 'p5',
+    title: 'Hand Placement',
+    description:
+      'Photo: your hand where you wish theirs was. Caption one filthy sentence.',
+    roundMin: 4,
+    roundMax: 5,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'photo',
+  },
+  {
+    id: 'p6',
+    title: 'Almost-Naked Mirror',
+    description:
+      'Mirror selfie in whatever you\'re down to. Make them regret the closed door.',
+    roundMin: 4,
+    roundMax: 5,
+    intensities: ['fire', 'hard'],
+    media: 'photo',
+  },
+  {
+    id: 'p7',
+    title: 'Spit Selfie',
+    description:
+      'Photo: spit on your fingers or chest. Caption it for them. Send via your messages only.',
+    roundMin: 4,
+    roundMax: 5,
+    intensities: ['hard'],
+    media: 'photo',
+  },
+  {
+    id: 'p8',
+    title: 'Bite Mark Claim',
+    description:
+      'Photo of a place you want them to bite — marked with lipstick, a finger, or a caption arrow.',
+    roundMin: 4,
+    roundMax: 5,
+    intensities: ['fire', 'hard'],
+    media: 'photo',
+  },
 
-  // Rounds 7-10: together + filthy
-  { id: 'c25', title: 'Finally Together', description: 'Get in the same bed / couch. Full body press for 2 minutes. Kiss wherever you want.', roundMin: 7, roundMax: 10, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'c26', title: 'Undress Each Other', description: 'Remove each other\'s remaining clothes. Slowly. No rushing to genitals yet.', roundMin: 7, roundMax: 10, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'c27', title: 'Mutual Oral Minute', description: '69 or take turns — both get oral for at least 60 seconds.', roundMin: 7, roundMax: 10, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'c28', title: 'Position Roulette', description: 'Loser of a coin flip (or the guest) picks the sex position. Do it for 3 minutes.', roundMin: 7, roundMax: 10, intensities: ['spicy', 'fire', 'hard'], media: 'touch' },
-  { id: 'c29', title: 'Eye Contact Fuck', description: 'Penetrative or grinding sex with mandatory eye contact for 2 minutes.', roundMin: 7, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'c30', title: 'Orgasm Race', description: 'Try to make the other cum first with hand or mouth. 5 minute cap. Winner brags.', roundMin: 7, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'c31', title: 'Deep & Filthy', description: 'Oral as deep as safe + filthy praise the whole time. 3 minutes.', roundMin: 7, roundMax: 10, intensities: ['hard'], media: 'touch' },
-  { id: 'c32', title: 'Anal Warmup Night', description: 'Lots of lube. Anal fingering or play for 3 minutes with constant check-ins.', roundMin: 7, roundMax: 10, intensities: ['hard'], media: 'touch' },
-  { id: 'c33', title: 'Face Fuck Soft', description: 'Consensual face-fucking at a pace the receiver sets with taps. 90 seconds.', roundMin: 7, roundMax: 10, intensities: ['hard'], media: 'touch' },
-  { id: 'c34', title: 'Prone Bone Prayer', description: 'Prone bone or similar. Slow then hard. Dirty talk required. 4 minutes.', roundMin: 7, roundMax: 10, intensities: ['hard'], media: 'touch' },
-  { id: 'c35', title: 'Cum Wherever', description: 'Agree on a finish spot (chest, mouth, inside, etc.) and make it happen together.', roundMin: 7, roundMax: 10, intensities: ['fire', 'hard'], media: 'touch' },
-  { id: 'c36', title: 'Aftercare Kiss', description: 'Whatever filth just happened — now hold each other and kiss soft for 2 minutes. Water optional.', roundMin: 7, roundMax: 10, intensities: ['romantic', 'spicy', 'fire', 'hard'], media: 'touch' },
+  // —— Short clips (apart) ——
+  {
+    id: 'v1',
+    title: '5-Second Breath',
+    description:
+      'Clip dare (5–10 sec): film your face breathing heavier. Send via your own messages — app never uploads.',
+    roundMin: 6,
+    roundMax: 7,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'video',
+  },
+  {
+    id: 'v2',
+    title: 'Slow Undress Clip',
+    description:
+      '10–15 sec: remove one piece of clothing on camera. Stay apart. Send it yourselves.',
+    roundMin: 6,
+    roundMax: 7,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'video',
+  },
+  {
+    id: 'v3',
+    title: 'Come Here',
+    description:
+      '5–10 sec clip: look into the camera and mouth or whisper "come here." Make it hurt.',
+    roundMin: 6,
+    roundMax: 7,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'video',
+  },
+  {
+    id: 'v4',
+    title: 'Touch Tease Clip',
+    description:
+      '10–15 sec: hands roaming your own body — suggestive, clothed or not. Send via your chat.',
+    roundMin: 6,
+    roundMax: 7,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'video',
+  },
+  {
+    id: 'v5',
+    title: 'Moan Clip',
+    description:
+      '5–12 sec: a real sound of wanting. No talking required. Send it. Stay in your room.',
+    roundMin: 6,
+    roundMax: 7,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'video',
+  },
+  {
+    id: 'v6',
+    title: 'Grind Promise',
+    description:
+      '10–15 sec: hips moving like you\'re already with them. Caption: "this is waiting for you."',
+    roundMin: 6,
+    roundMax: 7,
+    intensities: ['fire', 'hard'],
+    media: 'video',
+  },
+  {
+    id: 'v7',
+    title: 'Kneel Preview',
+    description:
+      '8–15 sec: kneel for the camera, look up, say one filthy sentence. Then stop. Stay apart.',
+    roundMin: 6,
+    roundMax: 7,
+    intensities: ['fire', 'hard'],
+    media: 'video',
+  },
+  {
+    id: 'v8',
+    title: 'Hard Edge Clip',
+    description:
+      '10–15 sec of edging yourself on camera — stop before the end. Send via your messages only.',
+    roundMin: 6,
+    roundMax: 7,
+    intensities: ['hard'],
+    media: 'video',
+  },
+
+  // —— Filth (together) ——
+  {
+    id: 'f1',
+    title: 'Finally Together',
+    description:
+      'Same bed / couch. Full body press for 2 minutes. Kiss wherever you want.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f2',
+    title: 'Undress Each Other',
+    description:
+      'Remove each other\'s remaining clothes. Slowly. No rushing to genitals yet.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f3',
+    title: 'Mutual Oral Minute',
+    description: '69 or take turns — both get oral for at least 60 seconds.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f4',
+    title: 'Position Roulette',
+    description:
+      'Loser of a coin flip (or the guest) picks the sex position. Do it for 3 minutes.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['spicy', 'fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f5',
+    title: 'Eye Contact Fuck',
+    description:
+      'Penetrative or grinding sex with mandatory eye contact for 2 minutes.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f6',
+    title: 'Orgasm Race',
+    description:
+      'Try to make the other cum first with hand or mouth. 5 minute cap. Winner brags.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f7',
+    title: 'Deep & Filthy',
+    description: 'Oral as deep as safe + filthy praise the whole time. 3 minutes.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f8',
+    title: 'Anal Warmup Night',
+    description:
+      'Lots of lube. Anal fingering or play for 3 minutes with constant check-ins.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f9',
+    title: 'Face Fuck Soft',
+    description:
+      'Consensual face-fucking at a pace the receiver sets with taps. 90 seconds.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f10',
+    title: 'Prone Bone Prayer',
+    description:
+      'Prone bone or similar. Slow then hard. Dirty talk required. 4 minutes.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f11',
+    title: 'Cum Wherever',
+    description:
+      'Agree on a finish spot (chest, mouth, inside, etc.) and make it happen together.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['fire', 'hard'],
+    media: 'touch',
+  },
+  {
+    id: 'f12',
+    title: 'Aftercare Kiss',
+    description:
+      'Whatever filth just happened — now hold each other and kiss soft for 2 minutes. Water optional.',
+    roundMin: 8,
+    roundMax: 10,
+    intensities: ['romantic', 'spicy', 'fire', 'hard'],
+    media: 'touch',
+  },
 ]
 
 export const CHALLENGES: ChallengeCard[] = [...BASE_CHALLENGES, ...DARE_CHALLENGES]
